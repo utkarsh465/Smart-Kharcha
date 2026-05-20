@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-light text-slate-800 antialiased font-sans transition-colors duration-300;
+  }
+  
+  body.dark {
+    @apply bg-brand-darker text-slate-200;
+  }
+}
+
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-slate-600;
+}
+
+/* ===== FULL DARK MODE CALENDAR OVERRIDE ===== */
+
+.dark .react-calendar {
+  background-color: #111827 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.dark .react-calendar__month-view__weekdays__weekday {
+  color: #9ca3af !important;
+}
+
+.dark .react-calendar__tile {
+  background: transparent !important;
+  color: white !important;
+}
+
+.dark .react-calendar__tile:enabled:hover {
+  background: #1f2937 !important;
+  color: white !important;
+}
+
+.dark .react-calendar__tile--now {
+  background: #374151 !important;
+  color: white !important;
+}
+
+.dark .react-calendar__tile--active {
+  background: #2563eb !important;
+  color: white !important;
+}
+
+.dark .react-calendar__navigation button {
+  background: transparent !important;
+  color: white !important;
+}
+
+.dark .react-calendar * {
+  color: white !important;
+}
+
+.dark .react-calendar {
+  background-color: #111827 !important;
+}

@@ -1,0 +1,113 @@
+
+> client@0.0.0 lint
+> eslint .
+
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\App.jsx
+  22:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  20 |     const status = localStorage.getItem("isLoggedIn");
+  21 |     if (status === "true") {
+> 22 |       setIsLoggedIn(true);
+     |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |     }
+  24 |   }, []);
+  25 |  react-hooks/set-state-in-effect
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\components\Analytics.jsx
+  47:13  error  'e' is defined but never used  no-unused-vars
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\components\Header.jsx
+  5:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\components\Navbar.jsx
+  4:7  error  Parsing error: Identifier 'Navbar' has already been declared
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\context\ThemeContext.jsx
+   3:14  error  Fast refresh only works when a file only exports components. Move your React context(s) to a separate file                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-refresh/only-export-components
+  11:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+   9 |     const saved = localStorage.getItem("darkMode");
+  10 |     if (saved === "true") {
+> 11 |       setDarkMode(true);
+     |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  12 |       document.documentElement.classList.add("dark");
+  13 |     }
+  14 |   }, []);  react-hooks/set-state-in-effect
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\pages\CalendarPage.jsx
+  15:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  13 |
+  14 |     if (currentUser && allTransactions[currentUser.email]) {
+> 15 |       setTransactions(allTransactions[currentUser.email]);
+     |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  16 |     } else {
+  17 |       setTransactions([]);
+  18 |     }  react-hooks/set-state-in-effect
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\pages\Dashboard.jsx
+   3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  31:28  error  'setSelectedCategory' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  40:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  38 |
+  39 |     if (currentUser && allTransactions[currentUser.email]) {
+> 40 |       setTransactions(allTransactions[currentUser.email]);
+     |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  41 |     } else {
+  42 |       setTransactions([]);
+  43 |     }  react-hooks/set-state-in-effect
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\pages\Login.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\pages\Profile.jsx
+  23:7   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  21 |     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+  22 |     if (currentUser) {
+> 23 |       setUser(currentUser);
+     |       ^^^^^^^ Avoid calling setState() directly within an effect
+  24 |       setForm({
+  25 |         username: currentUser.username,
+  26 |         email: currentUser.email,  react-hooks/set-state-in-effect
+  92:49  error  'updatedUser' is not defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-undef
+  93:56  error  'updatedUser' is not defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-undef
+  95:13  error  'updatedUser' is not defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-undef
+
+C:\Users\Acer\Desktop\smart_kharcha\smart_kharcha\client\src\pages\Register.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+✖ 16 problems (16 errors, 0 warnings)
+
