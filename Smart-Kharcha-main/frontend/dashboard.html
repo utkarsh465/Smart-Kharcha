@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Smart Kharcha</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4f46e5',
+                        secondary: '#10b981',
+                        danger: '#ef4444',
+                        dark: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Phosphor Icons (for premium look) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-full shadow-sm z-20 hidden md:flex">
+        <div class="h-16 flex items-center px-6 border-b border-gray-100">
+            <h1 class="text-xl font-bold text-gray-800 tracking-tight">Smart Kharcha<span class="text-primary">.</span></h1>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary font-medium rounded-xl transition-colors">
+                <i class="ph ph-squares-four text-xl"></i>
+                Dashboard
+            </a>
+            <a href="calendar.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 font-medium rounded-xl transition-colors">
+                <i class="ph ph-calendar text-xl"></i>
+                Calendar
+            </a>
+            <a href="scanner.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 font-medium rounded-xl transition-colors">
+                <i class="ph ph-receipt text-xl"></i>
+                Scanner
+            </a>
+            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 font-medium rounded-xl transition-colors">
+                <i class="ph ph-user text-xl"></i>
+                Profile
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <button id="logout-btn" class="flex w-full items-center gap-3 px-4 py-3 text-danger hover:bg-red-50 font-medium rounded-xl transition-colors">
+                <i class="ph ph-sign-out text-xl"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative overflow-y-auto bg-gray-50">
+        
+        <!-- Topbar (Mobile) -->
+        <header class="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+            <h1 class="text-lg font-bold text-gray-800">Smart Kharcha<span class="text-primary">.</span></h1>
+            <button id="mobile-menu-btn" class="text-gray-600">
+                <i class="ph ph-list text-2xl"></i>
+            </button>
+        </header>
+
+        <!-- Dashboard Header -->
+        <div class="px-8 pt-8 pb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Welcome back, <span id="user-name-display" class="text-primary">User</span>! 👋</h2>
+            <p class="text-gray-500 mt-1">Here is a summary of your recent expenses.</p>
+        </div>
+
+        <div class="flex-1 p-8 grid grid-cols-1 lg:grid-cols-3 gap-8 content-start">
+            
+            <!-- Left Column: Summary & Add Expense -->
+            <div class="space-y-8 lg:col-span-1">
+                
+                <!-- Total Card -->
+                <div class="glass-card rounded-2xl p-6 bg-gradient-to-br from-primary to-indigo-600 text-white relative overflow-hidden">
+                    <div class="absolute -right-6 -top-6 text-white/10 text-9xl">
+                        <i class="ph-fill ph-wallet"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <p class="text-indigo-100 font-medium mb-1">Total Expenses (This Month)</p>
+                        <h3 class="text-4xl font-bold">₹<span id="total-expense">0.00</span></h3>
+                    </div>
+                </div>
+
+                <!-- Add Expense Form -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Add New Expense</h3>
+                    <form id="add-expense-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Amount (₹)</label>
+                            <input type="number" id="expense-amount" required min="1" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Category</label>
+                            <select id="expense-category" required class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all">
+                                <option value="Food">Food & Dining</option>
+                                <option value="Transport">Transportation</option>
+                                <option value="Shopping">Shopping</option>
+                                <option value="Bills">Bills & Utilities</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Date</label>
+                            <input type="date" id="expense-date" required class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Description</label>
+                            <input type="text" id="expense-desc" required class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="e.g. Lunch at Cafe">
+                        </div>
+                        <button type="submit" class="w-full flex justify-center py-2.5 px-4 rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-indigo-700 transition-colors">
+                            Add Expense
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column: Recent Transactions -->
+            <div class="glass-card rounded-2xl p-6 lg:col-span-2 flex flex-col h-[600px]">
+                <div class="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Recent Transactions</h3>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto pr-2 space-y-3" id="transactions-list">
+                    <!-- Loading State -->
+                    <div class="text-center py-10 text-gray-500">
+                        <i class="ph ph-spinner-gap animate-spin text-3xl mb-2"></i>
+                        <p>Loading transactions...</p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <script type="module" src="./js/dashboard.js"></script>
+</body>
+</html>

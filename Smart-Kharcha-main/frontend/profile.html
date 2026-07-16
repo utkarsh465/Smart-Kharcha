@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Smart Kharcha</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: '#4f46e5', secondary: '#10b981', danger: '#ef4444' }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>body { font-family: 'Inter', sans-serif; background: #f8fafc; }</style>
+</head>
+<body class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-full shadow-sm z-20 hidden md:flex">
+        <div class="h-16 flex items-center px-6 border-b border-gray-100">
+            <h1 class="text-xl font-bold text-gray-800 tracking-tight">Smart Kharcha<span class="text-primary">.</span></h1>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 font-medium rounded-xl transition-colors">
+                <i class="ph ph-squares-four text-xl"></i> Dashboard
+            </a>
+            <a href="calendar.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 font-medium rounded-xl transition-colors">
+                <i class="ph ph-calendar text-xl"></i> Calendar
+            </a>
+            <a href="scanner.html" class="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-50 font-medium rounded-xl transition-colors">
+                <i class="ph ph-receipt text-xl"></i> Scanner
+            </a>
+            <a href="profile.html" class="flex items-center gap-3 px-4 py-3 bg-primary/10 text-primary font-medium rounded-xl transition-colors">
+                <i class="ph ph-user text-xl"></i> Profile
+            </a>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <button onclick="localStorage.clear(); window.location.href='index.html'" class="flex w-full items-center gap-3 px-4 py-3 text-danger hover:bg-red-50 font-medium rounded-xl transition-colors">
+                <i class="ph ph-sign-out text-xl"></i> Logout
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full relative overflow-y-auto bg-gray-50">
+        <header class="md:hidden h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+            <h1 class="text-lg font-bold text-gray-800">Smart Kharcha<span class="text-primary">.</span></h1>
+            <button class="text-gray-600"><i class="ph ph-list text-2xl"></i></button>
+        </header>
+
+        <div class="p-8">
+            <h2 class="text-2xl font-bold text-gray-800">Your Profile</h2>
+            <p class="text-gray-500 mt-1">Manage your account settings.</p>
+            
+            <div class="mt-8 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm max-w-2xl">
+                <div class="flex items-center gap-6 mb-8">
+                    <div class="w-24 h-24 bg-primary/20 text-primary rounded-full flex items-center justify-center text-4xl font-bold" id="profile-avatar">
+                        U
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800" id="profile-name">User Name</h3>
+                        <p class="text-gray-500" id="profile-email">user@example.com</p>
+                    </div>
+                </div>
+                
+                <hr class="border-gray-100 my-6">
+                
+                <h4 class="font-bold text-gray-800 mb-4">Account Details</h4>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Name</label>
+                        <p class="text-gray-800 font-medium" id="detail-name">User Name</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Member Since</label>
+                        <p class="text-gray-800 font-medium">Just now</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        if (!localStorage.getItem('token')) window.location.href = 'index.html';
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                const name = user.name || 'User';
+                document.getElementById('profile-name').textContent = name;
+                document.getElementById('detail-name').textContent = name;
+                document.getElementById('profile-email').textContent = user.email || 'N/A';
+                document.getElementById('profile-avatar').textContent = name.charAt(0).toUpperCase();
+            } catch(e) {}
+        }
+    </script>
+</body>
+</html>
