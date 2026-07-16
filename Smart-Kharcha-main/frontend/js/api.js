@@ -53,6 +53,10 @@ const transactionAPI = {
         method: 'POST',
         body: JSON.stringify(transactionData)
     }),
+    update: (id, transactionData) => apiCall(`/transactions/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(transactionData)
+    }),
     delete: (id) => apiCall(`/transactions/${id}`, {
         method: 'DELETE'
     })
@@ -60,7 +64,11 @@ const transactionAPI = {
 
 // User API
 const userAPI = {
-    getProfile: () => apiCall('/users/profile')
+    getProfile: () => apiCall('/users/profile'),
+    updateProfile: (userData) => apiCall('/users/profile', {
+        method: 'PUT',
+        body: JSON.stringify(userData)
+    })
 };
 
 export { authAPI, transactionAPI, userAPI, getToken };
