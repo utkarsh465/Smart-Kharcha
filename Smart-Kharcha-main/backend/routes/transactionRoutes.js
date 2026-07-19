@@ -7,9 +7,17 @@ const {
   getTransactions,
   addTransaction,
   deleteTransaction,
-  updateTransaction
+  updateTransaction,
+  getCalendarTransactions,
+  getDashboardMetrics
 } = require("../controllers/transactionController");
 
+
+// get dashboard metrics
+router.get("/dashboard-metrics", protect, getDashboardMetrics);
+
+// get calendar transactions
+router.get("/calendar", protect, getCalendarTransactions);
 
 // get all transactions
 router.get("/", protect, getTransactions);

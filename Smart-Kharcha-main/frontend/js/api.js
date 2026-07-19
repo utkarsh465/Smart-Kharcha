@@ -49,6 +49,8 @@ const authAPI = {
 // Transactions API
 const transactionAPI = {
     getAll: () => apiCall('/transactions'),
+    getCalendarMonth: (month) => apiCall(`/transactions/calendar?month=${month}`),
+    getDashboardMetrics: (budgetLimit) => apiCall(`/transactions/dashboard-metrics?budgetLimit=${budgetLimit}`),
     add: (transactionData) => apiCall('/transactions', {
         method: 'POST',
         body: JSON.stringify(transactionData)

@@ -7,9 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Set User Profile Display in drawers
-    const userStr = localStorage.getItem('user');
-    
     // Handle Logout
     document.querySelectorAll('.logout-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -34,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return;
 
         const toast = document.createElement('div');
-        toast.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-white text-sm transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto min-w-[280px]';
+        toast.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-white text-sm transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto min-w-[280px] z-50';
         
         if (type === 'success') {
             toast.classList.add('bg-emerald-500', 'shadow-emerald-500/20');
@@ -58,65 +55,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Currency Settings Helper
     const getCurrencySymbol = () => localStorage.getItem('currency') || '₹';
-    const updateCurrencyDisplay = () => {
-        const symbol = getCurrencySymbol();
-        document.querySelectorAll('.currency-symbol').forEach(el => {
-            el.textContent = symbol;
-        });
-    };
-
+    
     const formatCurrency = (amount) => {
         return Number(amount).toLocaleString('en-IN', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
         });
     };
 
-    // Category mapping icons and color pills
+    // Category mapping icons and color badges
     const getCategoryIcon = (category) => {
         const icons = {
-            'Food': 'ph-hamburger',
-            'Transport': 'ph-car',
-            'Shopping': 'ph-shopping-bag',
-            'Bills': 'ph-receipt',
-            'Entertainment': 'ph-film-strip',
-            'Salary': 'ph-briefcase-metal',
-            'Investment': 'ph-trend-up',
-            'Other': 'ph-dots-three-circle'
+            'Food': '🍔',
+            'Transport': '🚗',
+            'Travel': '🚗',
+            'Shopping': '🛍',
+            'Medical': '💊',
+            'Bills': '📄',
+            'Salary': '💰',
+            'Entertainment': '🎮',
+            'Education': '📚',
+            'Other': '📌'
         };
-        return icons[category] || 'ph-currency-inr';
+        return icons[category] || '📌';
     };
 
-    const getCategoryColor = (category, type) => {
-        if (type === 'income') return 'bg-emerald-100 text-emerald-600';
+    const getCategoryBadgeClass = (category) => {
         const colors = {
-            'Food': 'bg-orange-100 text-orange-600',
-            'Transport': 'bg-blue-100 text-blue-600',
-            'Shopping': 'bg-purple-100 text-purple-600',
-            'Bills': 'bg-rose-100 text-rose-600',
-            'Entertainment': 'bg-pink-100 text-pink-600',
-            'Other': 'bg-slate-100 text-slate-600'
+            'Food': 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
+            'Transport': 'bg-blue-50 text-blue-700 border border-blue-200/60',
+            'Travel': 'bg-blue-50 text-blue-700 border border-blue-200/60',
+            'Shopping': 'bg-purple-50 text-purple-700 border border-purple-200/60',
+            'Medical': 'bg-rose-50 text-rose-700 border border-rose-200/60',
+            'Bills': 'bg-amber-50 text-amber-700 border border-amber-200/60',
+            'Entertainment': 'bg-pink-50 text-pink-700 border border-pink-200/60',
+            'Education': 'bg-indigo-50 text-indigo-700 border border-indigo-200/60',
+            'Other': 'bg-slate-50 text-slate-700 border border-slate-200/60'
         };
-        return colors[category] || 'bg-slate-100 text-slate-600';
+        return colors[category] || 'bg-slate-50 text-slate-700 border border-slate-200/60';
     };
 
     // Calendar state
-    let transactions = [];
-    let currentDate = new Date(); // Tracks visible month
-    let selectedCellDate = null; // YYYY-MM-DD for modal quick add
+    let transactionsByDay = {}; // Key: YYYY-MM-DD
+    let currentDate = new Date(); // Month view controller
+    let selectedCellDate = null; // Target YYYY-MM-DD for Quick Add
 
     // DOM references
     const daysGrid = document.getElementById('calendar-days-grid');
     const monthYearEl = document.getElementById('calendar-month-year');
     const prevMonthBtn = document.getElementById('prev-month-btn');
     const nextMonthBtn = document.getElementById('next-month-btn');
+    const loadingSpinner = document.getElementById('calendar-loading-spinner');
     
     const monthExpenseTotalEl = document.getElementById('month-expense-total');
     const monthIncomeTotalEl = document.getElementById('month-income-total');
-    const monthDaysActiveEl = document.getElementById('month-days-active');
+    const monthTransactionsCountEl = document.getElementById('month-transactions-count');
     const monthPeakSpendingEl = document.getElementById('month-peak-spending');
+    const monthAvgDailyExpenseEl = document.getElementById('month-avg-daily-expense');
 
-    // Build the grid UI
+    // Render Calendar GUI (Monday-first alignment)
     const renderCalendar = () => {
         const currencySymbol = getCurrencySymbol();
         daysGrid.innerHTML = '';
@@ -124,32 +121,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth(); // 0-indexed (0=Jan, 11=Dec)
         
-        // Month and Year label
+        // Month & Year header text
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         monthYearEl.textContent = `${monthNames[month]} ${year}`;
 
-        // Get bounds
-        const firstDayIndex = new Date(year, month, 1).getDay(); // Weekday starting (0-6)
+        // Monday-First alignment offsets:
+        // getDay() gives Sun=0, Mon=1, Tue=2, ..., Sat=6
+        // Under Monday-first, we map: Mon=0, Tue=1, ..., Sat=5, Sun=6
+        let firstDayIndex = new Date(year, month, 1).getDay();
+        firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+
         const totalDays = new Date(year, month + 1, 0).getDate(); // Days in current month
         const prevMonthTotalDays = new Date(year, month, 0).getDate(); // Days in previous month
-
-        // Gather transaction mapping for current visible month
-        const transactionsByDay = {};
-        transactions.forEach(t => {
-            const tDate = new Date(t.date);
-            const dateStr = tDate.toISOString().split('T')[0];
-            if (!transactionsByDay[dateStr]) {
-                transactionsByDay[dateStr] = [];
-            }
-            transactionsByDay[dateStr].push(t);
-        });
 
         // 1. Render Days of Previous Month (padding)
         for (let i = firstDayIndex - 1; i >= 0; i--) {
             const dayNum = prevMonthTotalDays - i;
             const cell = document.createElement('div');
-            cell.className = 'calendar-cell bg-slate-50/50 p-2 text-slate-400 border-b border-r border-slate-100 flex flex-col justify-between opacity-50';
-            cell.innerHTML = `<span class="text-xs font-semibold select-none">${dayNum}</span>`;
+            cell.className = 'calendar-cell bg-slate-50/40 p-2 text-slate-400 border-b border-r border-slate-100 flex flex-col justify-between opacity-40 select-none';
+            cell.innerHTML = `<span class="text-xs font-semibold">${dayNum}</span>`;
             daysGrid.appendChild(cell);
         }
 
@@ -158,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         for (let day = 1; day <= totalDays; day++) {
             const dateObj = new Date(year, month, day);
-            // Timezone offset correction to match YYYY-MM-DD correctly
             const yearStr = dateObj.getFullYear();
             const monthStr = String(dateObj.getMonth() + 1).padStart(2, '0');
             const dayStr = String(dateObj.getDate()).padStart(2, '0');
@@ -167,54 +156,46 @@ document.addEventListener('DOMContentLoaded', () => {
             const isToday = dateStr === todayStr;
             const dayTransactions = transactionsByDay[dateStr] || [];
 
+            // Filter daily expenses & incomes
+            const dayExpenses = dayTransactions.filter(t => t.type === 'expense');
+            const dayIncomes = dayTransactions.filter(t => t.type === 'income');
+            const totalDailyExpense = dayExpenses.reduce((sum, t) => sum + Number(t.amount), 0);
+
             const cell = document.createElement('div');
-            cell.className = `calendar-cell p-2 border-b border-r border-slate-200 bg-white hover:bg-indigo-50/30 cursor-pointer flex flex-col justify-between transition-all`;
+            cell.className = 'calendar-cell p-2 border-b border-r border-slate-200 bg-white hover:scale-[1.02] hover:shadow-md hover:z-10 cursor-pointer flex flex-col justify-between transition-all duration-200';
             
+            // Highlight today's date
             if (isToday) {
-                cell.classList.add('ring-2', 'ring-primary', 'ring-inset', 'z-10');
+                cell.classList.add('ring-2', 'ring-primary', 'ring-inset', 'z-20');
             }
 
-            // Compute totals for badges
-            let dailyExpense = 0;
-            let dailyIncome = 0;
-            dayTransactions.forEach(t => {
-                if (t.type === 'expense') dailyExpense += Number(t.amount);
-                else dailyIncome += Number(t.amount);
-            });
+            // Highlight expense days: Green border and soft blue background
+            if (totalDailyExpense > 0) {
+                cell.classList.add('border-emerald-400', 'bg-blue-50/50');
+            }
 
-            let badgeHtml = '';
-            if (dailyExpense > 0 && dailyIncome > 0) {
-                badgeHtml = `
-                    <div class="flex flex-col gap-0.5 text-[9px] font-bold text-right truncate">
-                        <span class="text-emerald-600 bg-emerald-50 px-1 rounded">+${currencySymbol}${Math.round(dailyIncome)}</span>
-                        <span class="text-rose-500 bg-rose-50 px-1 rounded">-${currencySymbol}${Math.round(dailyExpense)}</span>
-                    </div>
-                `;
-            } else if (dailyExpense > 0) {
-                badgeHtml = `
-                    <div class="text-right text-[10px] font-extrabold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-md inline-block self-end truncate">
-                        -${currencySymbol}${Math.round(dailyExpense)}
-                    </div>
-                `;
-            } else if (dailyIncome > 0) {
-                badgeHtml = `
-                    <div class="text-right text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md inline-block self-end truncate">
-                        +${currencySymbol}${Math.round(dailyIncome)}
+            // Render Date number and Daily Total
+            let amountHtml = '';
+            if (totalDailyExpense > 0) {
+                amountHtml = `
+                    <div class="text-right text-[10px] md:text-xs font-extrabold text-rose-500 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded-lg inline-block self-end truncate max-w-full">
+                        ${currencySymbol}${formatCurrency(totalDailyExpense)}
                     </div>
                 `;
             }
 
             cell.innerHTML = `
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center w-full">
                     <span class="text-xs md:text-sm font-bold ${isToday ? 'text-primary' : 'text-slate-700'}">${day}</span>
+                    <!-- Small indicator dot for mobile view -->
                     ${dayTransactions.length > 0 ? `<span class="w-1.5 h-1.5 bg-primary rounded-full md:hidden"></span>` : ''}
                 </div>
-                <div class="hidden md:block w-full">
-                    ${badgeHtml}
+                <div class="hidden md:block w-full text-right mt-2">
+                    ${amountHtml}
                 </div>
             `;
 
-            // Click interaction opens detail popup
+            // Click interaction opens detailed modal view
             cell.addEventListener('click', () => {
                 openDayModal(dateStr, dateObj, dayTransactions);
             });
@@ -222,54 +203,47 @@ document.addEventListener('DOMContentLoaded', () => {
             daysGrid.appendChild(cell);
         }
 
-        // 3. Render Next Month Days to pad remaining cells
+        // 3. Render Next Month Days (padding)
         const renderedCount = firstDayIndex + totalDays;
         const totalGridCells = 42; // standard 6 rows x 7 cols
         const paddingNext = totalGridCells - renderedCount;
         
         for (let day = 1; day <= paddingNext; day++) {
             const cell = document.createElement('div');
-            cell.className = 'calendar-cell bg-slate-50/50 p-2 text-slate-400 border-b border-r border-slate-100 flex flex-col justify-between opacity-50';
-            cell.innerHTML = `<span class="text-xs font-semibold select-none">${day}</span>`;
+            cell.className = 'calendar-cell bg-slate-50/40 p-2 text-slate-400 border-b border-r border-slate-100 flex flex-col justify-between opacity-40 select-none';
+            cell.innerHTML = `<span class="text-xs font-semibold">${day}</span>`;
             daysGrid.appendChild(cell);
         }
 
-        // 4. Update Summary Statistics for currently visible month
-        calculateMonthStats(year, month);
+        // 4. Update stats cards
+        calculateMonthStats();
     };
 
-    // Calculate month stats
-    const calculateMonthStats = (year, month) => {
+    // Calculate month statistics
+    const calculateMonthStats = () => {
         let totalExpense = 0;
         let totalIncome = 0;
-        const activeDays = new Set();
+        let expenseTransactionsCount = 0;
         const dailyExpenses = {};
 
-        transactions.forEach(t => {
-            const tDate = new Date(t.date);
-            if (tDate.getFullYear() === year && tDate.getMonth() === month) {
-                const dateKey = tDate.toISOString().split('T')[0];
+        // Aggregate across visible month
+        Object.keys(transactionsByDay).forEach(dateStr => {
+            const list = transactionsByDay[dateStr] || [];
+            list.forEach(t => {
                 const amt = Number(t.amount);
-                
                 if (t.type === 'expense') {
                     totalExpense += amt;
-                    dailyExpenses[dateKey] = (dailyExpenses[dateKey] || 0) + amt;
+                    expenseTransactionsCount++;
+                    dailyExpenses[dateStr] = (dailyExpenses[dateStr] || 0) + amt;
                 } else {
                     totalIncome += amt;
                 }
-                activeDays.add(dateKey);
-            }
+            });
         });
 
-        // Set labels
-        monthExpenseTotalEl.textContent = formatCurrency(totalExpense);
-        monthIncomeTotalEl.textContent = formatCurrency(totalIncome);
-        monthDaysActiveEl.textContent = activeDays.size;
-
-        // Find peak spending day
+        // Calculate peak spending day
         let peakDate = null;
         let peakAmt = 0;
-        
         Object.keys(dailyExpenses).forEach(dateStr => {
             if (dailyExpenses[dateStr] > peakAmt) {
                 peakAmt = dailyExpenses[dateStr];
@@ -277,26 +251,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Average daily expense
+        const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+        const avgDailyExpense = totalExpense / daysInMonth;
+
+        // Populate cards
+        monthExpenseTotalEl.textContent = formatCurrency(totalExpense);
+        monthIncomeTotalEl.textContent = formatCurrency(totalIncome);
+        monthTransactionsCountEl.textContent = expenseTransactionsCount;
+        
         if (peakDate) {
             const options = { month: 'short', day: 'numeric' };
             const formatted = new Date(peakDate).toLocaleDateString('en-IN', options);
-            monthPeakSpendingEl.textContent = `${formatted} (${getCurrencySymbol()}${Math.round(peakAmt)})`;
+            monthPeakSpendingEl.textContent = `${formatted} (${getCurrencySymbol()}${formatCurrency(peakAmt)})`;
         } else {
             monthPeakSpendingEl.textContent = 'None';
         }
+
+        monthAvgDailyExpenseEl.textContent = formatCurrency(avgDailyExpense);
     };
 
-    // Navigation triggers
+    // Month Navigation Triggers
     prevMonthBtn.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
-        updateCurrencyDisplay();
+        fetchTransactions();
     });
 
     nextMonthBtn.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
-        updateCurrencyDisplay();
+        fetchTransactions();
     });
 
     // Day Details Modal Controls
@@ -305,6 +288,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const dayTransactionsList = document.getElementById('day-transactions-list');
     const dayModalTitle = document.getElementById('day-modal-title');
     const dayModalDate = document.getElementById('day-modal-date');
+    
+    const dayModalTotal = document.getElementById('day-modal-total');
+    const dayModalCount = document.getElementById('day-modal-count');
 
     const openDayModal = (dateStr, dateObj, dayTransactions) => {
         selectedCellDate = dateStr;
@@ -313,10 +299,17 @@ document.addEventListener('DOMContentLoaded', () => {
         dayModalTitle.textContent = 'Transactions';
         dayModalDate.textContent = dateObj.toLocaleDateString('en-IN', options);
         
-        // Reset quick add form desc
+        // Reset quick add fields
         document.getElementById('quick-desc').value = '';
         document.getElementById('quick-amount').value = '';
         document.getElementById('quick-category').value = 'Food';
+
+        // Calculate total daily expense for modal summary
+        const expensesOnly = dayTransactions.filter(t => t.type === 'expense');
+        const dailyExpenseSum = expensesOnly.reduce((sum, t) => sum + Number(t.amount), 0);
+        
+        dayModalTotal.textContent = `${getCurrencySymbol()}${formatCurrency(dailyExpenseSum)}`;
+        dayModalCount.textContent = `${expensesOnly.length} ${expensesOnly.length === 1 ? 'Transaction' : 'Transactions'}`;
 
         renderDayTransactions(dayTransactions);
 
@@ -337,6 +330,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (closeDayModalBtn) closeDayModalBtn.addEventListener('click', closeDayModal);
 
+    // Keyboard support: Close modal on ESC keypress
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !dayModal.classList.contains('hidden')) {
+            closeDayModal();
+        }
+    });
+
+    // Click outside modal container to close it
+    dayModal.addEventListener('click', (e) => {
+        if (e.target === dayModal) {
+            closeDayModal();
+        }
+    });
+
     // Render list inside day modal
     const renderDayTransactions = (list) => {
         dayTransactionsList.innerHTML = '';
@@ -344,9 +351,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (list.length === 0) {
             dayTransactionsList.innerHTML = `
-                <div class="text-center py-6 text-slate-400">
-                    <i class="ph ph-receipt text-3xl mb-2 inline-block"></i>
-                    <p class="text-xs font-semibold">No transactions logged on this day.</p>
+                <div class="text-center py-10 text-slate-400 flex flex-col items-center justify-center gap-3">
+                    <span class="text-4xl">📌</span>
+                    <p class="text-xs font-semibold text-slate-500">No expenses recorded for this day.</p>
                 </div>
             `;
             return;
@@ -354,27 +361,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         list.forEach(t => {
             const item = document.createElement('div');
-            item.className = 'flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/50 rounded-2xl';
+            item.className = 'flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/50 rounded-2xl transition-all hover:bg-slate-100/50';
             
             const isExpense = t.type === 'expense';
-            const iconClass = getCategoryIcon(t.category);
-            const colorClass = getCategoryColor(t.category, t.type);
+            const iconEmoji = getCategoryIcon(t.category);
+            const badgeClass = getCategoryBadgeClass(t.category);
             const amountPrefix = isExpense ? '-' : '+';
             const amountColor = isExpense ? 'text-slate-800' : 'text-emerald-600';
 
+            // Parse transaction time or show fallback
+            let timeStr = '12:00 PM';
+            if (t.date) {
+                const dateObj = new Date(t.date);
+                timeStr = dateObj.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            }
+
             item.innerHTML = `
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center ${colorClass}">
-                        <i class="ph ${iconClass} text-xl"></i>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg ${badgeClass}">
+                        ${iconEmoji}
                     </div>
                     <div>
                         <h4 class="font-bold text-slate-800 text-xs md:text-sm">${t.title}</h4>
-                        <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">${t.category}</span>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${badgeClass}">${t.category}</span>
+                            <span class="text-[9px] text-slate-400 font-semibold">${timeStr}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="font-extrabold font-heading text-xs md:text-sm ${amountColor}">${amountPrefix}${currencySymbol}${formatCurrency(t.amount)}</span>
-                    <button class="delete-day-t-btn p-1 text-slate-400 hover:text-danger hover:bg-slate-100 rounded-lg transition-colors" data-id="${t._id}">
+                    <button class="delete-day-t-btn p-1.5 text-slate-400 hover:text-danger hover:bg-slate-100 rounded-lg transition-colors focus:outline-none" data-id="${t._id}">
                         <i class="ph ph-trash text-base"></i>
                     </button>
                 </div>
@@ -383,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Day list delete listener
-        document.querySelectorAll('.delete-day-t-btn').forEach(btn => {
+        dayTransactionsList.querySelectorAll('.delete-day-t-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = btn.getAttribute('data-id');
                 if (confirm('Delete this transaction permanently?')) {
@@ -400,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Quick Add on Day Form Submit
+    // Quick Add Expense Form on Day Modal Submit
     document.getElementById('quick-add-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!selectedCellDate) return;
@@ -434,26 +455,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Fetch transactions from server
+    // Fetch transactions from server for currently displayed month
     const fetchTransactions = async () => {
         try {
-            const data = await transactionAPI.getAll();
-            transactions = data.transactions || data || [];
+            // Show Loading Spinner overlay
+            loadingSpinner.classList.remove('hidden');
+
+            const year = currentDate.getFullYear();
+            const monthStr = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const targetMonth = `${year}-${monthStr}`;
+
+            const groupedData = await transactionAPI.getCalendarMonth(targetMonth);
+            transactionsByDay = groupedData || {};
             
             // Build grid
             renderCalendar();
-            
-            // Sync currency
-            updateCurrencyDisplay();
         } catch (error) {
             console.error('Error fetching calendar transactions:', error);
-            showToast('Failed to load transaction data');
+            showToast('Failed to synchronize with ledger service.');
             daysGrid.innerHTML = `
                 <div class="col-span-7 text-center py-20 text-rose-500 font-semibold">
-                    <i class="ph ph-warning-circle text-4xl mb-2 inline-block"></i>
+                    <span class="text-4xl block mb-2">⚠️</span>
                     <p>Failed to synchronize with ledger service.</p>
                 </div>
             `;
+        } finally {
+            // Hide loading spinner
+            loadingSpinner.classList.add('hidden');
         }
     };
 
