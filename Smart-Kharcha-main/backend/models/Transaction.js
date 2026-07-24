@@ -32,6 +32,31 @@ const transactionSchema = new mongoose.Schema({
   date: {
     type: Date,
     default: Date.now
+  },
+
+  description: {
+    type: String,
+    default: ""
+  },
+
+  paymentMethod: {
+    type: String,
+    default: "cash"
+  },
+
+  isPinned: {
+    type: Boolean,
+    default: false
+  },
+
+  tags: {
+    type: [String],
+    default: []
+  },
+
+  receiptImage: {
+    type: String,
+    default: null
   }
 });
 

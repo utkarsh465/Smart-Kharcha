@@ -27,8 +27,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Toast Notifications System
     function showToast(message, type = 'error') {
-        const container = document.getElementById('toast-container');
+        const container = document.getElementById('toast-container-wrapper');
         if (!container) return;
+        let innerContainer = document.getElementById('toast-container');
+        if(!innerContainer) {
+             innerContainer = document.createElement('div');
+             innerContainer.id = 'toast-container';
+             innerContainer.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 z-50 pointer-events-none';
+             container.appendChild(innerContainer);
+        }
 
         const toast = document.createElement('div');
         toast.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-white text-sm transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto min-w-[280px] z-50';
@@ -44,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toast.innerHTML = `<i class="ph-fill ph-x-circle text-xl"></i><span class="font-medium">${message}</span>`;
         }
         
-        container.appendChild(toast);
+        innerContainer.appendChild(toast);
         setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
         
         setTimeout(() => {
@@ -55,263 +62,370 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Currency Settings Helper
     const getCurrencySymbol = () => localStorage.getItem('currency') || '₹';
-    
-    const formatCurrency = (amount) => {
-        return Number(amount).toLocaleString('en-IN', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
-    };
+    const formatCurrency = (amount) => Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
     // Category mapping icons and color badges
     const getCategoryIcon = (category) => {
         const icons = {
-            'Food': '🍔',
-            'Transport': '🚗',
-            'Travel': '🚗',
-            'Shopping': '🛍',
-            'Medical': '💊',
-            'Bills': '📄',
-            'Salary': '💰',
-            'Entertainment': '🎮',
-            'Education': '📚',
-            'Other': '📌'
+            'Food': '🍔', 'Transport': '🚗', 'Travel': '🚗', 'Shopping': '🛍', 'Medical': '💊',
+            'Bills': '📄', 'Salary': '💰', 'Entertainment': '🎮', 'Education': '📚', 'Other': '📌'
         };
         return icons[category] || '📌';
     };
 
     const getCategoryBadgeClass = (category) => {
         const colors = {
-            'Food': 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
-            'Transport': 'bg-blue-50 text-blue-700 border border-blue-200/60',
-            'Travel': 'bg-blue-50 text-blue-700 border border-blue-200/60',
-            'Shopping': 'bg-purple-50 text-purple-700 border border-purple-200/60',
-            'Medical': 'bg-rose-50 text-rose-700 border border-rose-200/60',
-            'Bills': 'bg-amber-50 text-amber-700 border border-amber-200/60',
-            'Entertainment': 'bg-pink-50 text-pink-700 border border-pink-200/60',
-            'Education': 'bg-indigo-50 text-indigo-700 border border-indigo-200/60',
-            'Other': 'bg-slate-50 text-slate-700 border border-slate-200/60'
+            'Food': 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+            'Transport': 'bg-blue-50 text-blue-700 border-blue-200/60',
+            'Travel': 'bg-blue-50 text-blue-700 border-blue-200/60',
+            'Shopping': 'bg-purple-50 text-purple-700 border-purple-200/60',
+            'Medical': 'bg-rose-50 text-rose-700 border-rose-200/60',
+            'Bills': 'bg-amber-50 text-amber-700 border-amber-200/60',
+            'Entertainment': 'bg-pink-50 text-pink-700 border-pink-200/60',
+            'Education': 'bg-indigo-50 text-indigo-700 border-indigo-200/60',
+            'Salary': 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+            'Other': 'bg-slate-50 text-slate-700 border-slate-200/60'
         };
-        return colors[category] || 'bg-slate-50 text-slate-700 border border-slate-200/60';
+        return (colors[category] || colors['Other']) + ' border';
     };
 
     // Calendar state
-    let transactionsByDay = {}; // Key: YYYY-MM-DD
-    let currentDate = new Date(); // Month view controller
-    let selectedCellDate = null; // Target YYYY-MM-DD for Quick Add
+    const monthCache = {}; // Cache fetched months data
+    let transactionsByDay = {}; // Key: YYYY-MM-DD -> { expense, income, transactions: [] }
+    let currentDate = new Date(); 
+    let selectedCellDate = null; 
+    let activeFilter = 'all'; // 'all', 'type:expense', 'type:income', 'cat:Food', etc.
+    let searchQuery = '';
 
     // DOM references
     const daysGrid = document.getElementById('calendar-days-grid');
     const monthYearEl = document.getElementById('calendar-month-year');
-    const prevMonthBtn = document.getElementById('prev-month-btn');
-    const nextMonthBtn = document.getElementById('next-month-btn');
     const loadingSpinner = document.getElementById('calendar-loading-spinner');
+    const searchInput = document.getElementById('calendar-search');
     
-    const monthExpenseTotalEl = document.getElementById('month-expense-total');
-    const monthIncomeTotalEl = document.getElementById('month-income-total');
-    const monthTransactionsCountEl = document.getElementById('month-transactions-count');
-    const monthPeakSpendingEl = document.getElementById('month-peak-spending');
-    const monthAvgDailyExpenseEl = document.getElementById('month-avg-daily-expense');
+    // Stats elements
+    const statExpense = document.getElementById('month-expense-total');
+    const statIncome = document.getElementById('month-income-total');
+    const statNetSavings = document.getElementById('month-net-savings');
+    const statTxnCount = document.getElementById('month-transactions-count');
+    const statPeakSpend = document.getElementById('month-peak-spending');
+    const statPeakInc = document.getElementById('month-peak-income');
+    const statAvgExp = document.getElementById('month-avg-daily-expense');
+    const statBudget = document.getElementById('month-budget-remaining');
+    
+    // Analytics elements
+    const anaCat = document.getElementById('analytic-high-cat');
+    const anaWeek = document.getElementById('analytic-high-week');
+    const anaWeekend = document.getElementById('analytic-high-weekend');
+    const anaAvgWk = document.getElementById('analytic-avg-weekday');
+    const anaAvgWkend = document.getElementById('analytic-avg-weekend');
+    const anaFreq = document.getElementById('analytic-freq');
 
-    // Render Calendar GUI (Monday-first alignment)
+    // Tippy instances
+    let tippyInstances = [];
+
+    // Main Render Calendar
     const renderCalendar = () => {
         const currencySymbol = getCurrencySymbol();
         daysGrid.innerHTML = '';
         
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth(); // 0-indexed (0=Jan, 11=Dec)
+        // Destroy existing tippy tooltips
+        tippyInstances.forEach(t => t.destroy());
+        tippyInstances = [];
         
-        // Month & Year header text
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth(); 
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         monthYearEl.textContent = `${monthNames[month]} ${year}`;
 
-        // Monday-First alignment offsets:
-        // getDay() gives Sun=0, Mon=1, Tue=2, ..., Sat=6
-        // Under Monday-first, we map: Mon=0, Tue=1, ..., Sat=5, Sun=6
         let firstDayIndex = new Date(year, month, 1).getDay();
-        firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+        firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1; // Mon-first
 
-        const totalDays = new Date(year, month + 1, 0).getDate(); // Days in current month
-        const prevMonthTotalDays = new Date(year, month, 0).getDate(); // Days in previous month
+        const totalDays = new Date(year, month + 1, 0).getDate(); 
+        const prevMonthTotalDays = new Date(year, month, 0).getDate(); 
 
-        // 1. Render Days of Previous Month (padding)
+        // Calc max daily expense for heatmap
+        let maxDailyExpense = 0;
+        Object.values(transactionsByDay).forEach(dayObj => {
+            if (dayObj.expense > maxDailyExpense) maxDailyExpense = dayObj.expense;
+        });
+
+        let todayDateStrLocal = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
+
+        // 1. Prev Month Padding
         for (let i = firstDayIndex - 1; i >= 0; i--) {
-            const dayNum = prevMonthTotalDays - i;
-            const cell = document.createElement('div');
-            cell.className = 'calendar-cell bg-slate-50/40 p-2 text-slate-400 border-b border-r border-slate-100 flex flex-col justify-between opacity-40 select-none';
-            cell.innerHTML = `<span class="text-xs font-semibold">${dayNum}</span>`;
+            const cell = createPaddingCell(prevMonthTotalDays - i);
             daysGrid.appendChild(cell);
         }
 
-        // 2. Render Current Month Days
-        const todayStr = new Date().toISOString().split('T')[0];
-        
+        // 2. Current Month Days
         for (let day = 1; day <= totalDays; day++) {
-            const dateObj = new Date(year, month, day);
-            const yearStr = dateObj.getFullYear();
-            const monthStr = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const dayStr = String(dateObj.getDate()).padStart(2, '0');
-            const dateStr = `${yearStr}-${monthStr}-${dayStr}`;
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isToday = dateStr === todayDateStrLocal;
+            
+            // Get data & apply filters
+            let rawData = transactionsByDay[dateStr] || { expense: 0, income: 0, transactions: [] };
+            let filteredTxns = rawData.transactions.filter(t => {
+                let matchFilter = true;
+                if (activeFilter.startsWith('type:')) {
+                    matchFilter = t.type === activeFilter.split(':')[1];
+                } else if (activeFilter.startsWith('cat:')) {
+                    matchFilter = t.category === activeFilter.split(':')[1];
+                }
+                let matchSearch = true;
+                if (searchQuery) {
+                    const q = searchQuery.toLowerCase();
+                    matchSearch = t.title.toLowerCase().includes(q) || t.category.toLowerCase().includes(q) || String(t.amount).includes(q) || (t.description && t.description.toLowerCase().includes(q));
+                }
+                return matchFilter && matchSearch;
+            });
 
-            const isToday = dateStr === todayStr;
-            const dayTransactions = transactionsByDay[dateStr] || [];
+            // Recompute day stats based on filtered txns
+            let dExp = 0, dInc = 0;
+            filteredTxns.forEach(t => {
+                if(t.type === 'expense') dExp += Number(t.amount);
+                else dInc += Number(t.amount);
+            });
 
-            // Filter daily expenses & incomes
-            const dayExpenses = dayTransactions.filter(t => t.type === 'expense');
-            const dayIncomes = dayTransactions.filter(t => t.type === 'income');
-            const totalDailyExpense = dayExpenses.reduce((sum, t) => sum + Number(t.amount), 0);
+            const hasTxn = filteredTxns.length > 0;
+            const isWeekend = new Date(year, month, day).getDay() === 0 || new Date(year, month, day).getDay() === 6;
 
             const cell = document.createElement('div');
-            cell.className = 'calendar-cell p-2 border-b border-r border-slate-200 bg-white hover:scale-[1.02] hover:shadow-md hover:z-10 cursor-pointer flex flex-col justify-between transition-all duration-200';
+            cell.className = `calendar-cell p-2 border-b border-r border-slate-200 hover:scale-[1.02] hover:shadow-lg hover:z-10 cursor-pointer flex flex-col justify-between transition-all duration-300 relative`;
             
-            // Highlight today's date
-            if (isToday) {
-                cell.classList.add('ring-2', 'ring-primary', 'ring-inset', 'z-20');
+            // Base background
+            if(isWeekend) cell.classList.add('bg-slate-50/50');
+            else cell.classList.add('bg-white');
+
+            // Today Highlight
+            if (isToday) cell.classList.add('ring-2', 'ring-primary', 'ring-inset', 'z-20');
+
+            // Search highlight
+            if (searchQuery && hasTxn) {
+                cell.classList.add('bg-yellow-50', 'border-yellow-300');
             }
 
-            // Highlight expense days: Green border and soft blue background
-            if (totalDailyExpense > 0) {
-                cell.classList.add('border-emerald-400', 'bg-blue-50/50');
-            }
-
-            // Render Date number and Daily Total
+            // Heatmap & Status colors
+            let statusDot = '';
             let amountHtml = '';
-            if (totalDailyExpense > 0) {
-                amountHtml = `
-                    <div class="text-right text-[10px] md:text-xs font-extrabold text-rose-500 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded-lg inline-block self-end truncate max-w-full">
-                        ${currencySymbol}${formatCurrency(totalDailyExpense)}
-                    </div>
-                `;
+
+            if (hasTxn && !searchQuery) { // Don't override search highlight with heatmap if searching
+                if (dExp > 0 && dInc > 0) {
+                    cell.classList.add('border-purple-300');
+                    statusDot = `<span class="w-2 h-2 rounded-full bg-purple-500"></span>`;
+                } else if (dInc > 0 && dExp === 0) {
+                    cell.classList.add('border-emerald-300', 'bg-emerald-50/30');
+                    statusDot = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span>`;
+                } else if (dExp > 0) {
+                    // Heatmap logic for expenses
+                    const intensity = dExp / maxDailyExpense;
+                    if (intensity > 0.66) {
+                        cell.classList.add('border-rose-400', 'bg-rose-100/50');
+                    } else if (intensity > 0.33) {
+                        cell.classList.add('border-rose-300', 'bg-rose-50/50');
+                    } else {
+                        cell.classList.add('border-rose-200');
+                    }
+                    statusDot = `<span class="w-2 h-2 rounded-full bg-rose-500"></span>`;
+                }
+            }
+
+            // Daily Total display
+            if (dExp > 0) {
+                amountHtml = `<div class="text-right text-[10px] md:text-xs font-bold text-rose-500 truncate mt-1">${currencySymbol}${formatCurrency(dExp)}</div>`;
+            } else if (dInc > 0) {
+                amountHtml = `<div class="text-right text-[10px] md:text-xs font-bold text-emerald-500 truncate mt-1">+${currencySymbol}${formatCurrency(dInc)}</div>`;
             }
 
             cell.innerHTML = `
-                <div class="flex justify-between items-center w-full">
+                <div class="flex justify-between items-start w-full">
                     <span class="text-xs md:text-sm font-bold ${isToday ? 'text-primary' : 'text-slate-700'}">${day}</span>
-                    <!-- Small indicator dot for mobile view -->
-                    ${dayTransactions.length > 0 ? `<span class="w-1.5 h-1.5 bg-primary rounded-full md:hidden"></span>` : ''}
+                    <div class="flex gap-1">${statusDot}</div>
                 </div>
-                <div class="hidden md:block w-full text-right mt-2">
-                    ${amountHtml}
-                </div>
+                <div class="w-full text-right">${amountHtml}</div>
             `;
 
-            // Click interaction opens detailed modal view
-            cell.addEventListener('click', () => {
-                openDayModal(dateStr, dateObj, dayTransactions);
+            // Hover Tooltip content
+            if (hasTxn && window.tippy) {
+                let tooltipHtml = `<div class="p-1 min-w-[150px]"><div class="text-xs font-bold border-b border-slate-600 pb-1 mb-1">${new Date(year, month, day).toLocaleDateString('en-IN', {month:'short', day:'numeric'})}</div>`;
+                filteredTxns.slice(0, 4).forEach(t => {
+                    const cColor = t.type === 'expense' ? 'text-rose-400' : 'text-emerald-400';
+                    tooltipHtml += `<div class="flex justify-between text-[11px] my-1 gap-4">
+                        <span class="truncate">${getCategoryIcon(t.category)} ${t.title}</span>
+                        <span class="${cColor} font-bold">${currencySymbol}${formatCurrency(t.amount)}</span>
+                    </div>`;
+                });
+                if (filteredTxns.length > 4) {
+                    tooltipHtml += `<div class="text-[10px] text-slate-400 text-center mt-1">+${filteredTxns.length - 4} more</div>`;
+                }
+                tooltipHtml += `</div>`;
+                
+                tippyInstances.push(tippy(cell, {
+                    content: tooltipHtml,
+                    allowHTML: true,
+                    theme: 'translucent',
+                    placement: 'auto',
+                    arrow: true,
+                    animation: 'scale'
+                }));
+            }
+
+            // Interactions
+            cell.addEventListener('click', (e) => {
+                openDayModal(dateStr, new Date(year, month, day), filteredTxns, {exp: dExp, inc: dInc});
+            });
+            
+            cell.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                openQuickAdd(dateStr);
+            });
+            
+            cell.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                openQuickAdd(dateStr);
             });
 
             daysGrid.appendChild(cell);
         }
 
-        // 3. Render Next Month Days (padding)
+        // 3. Next Month Padding
         const renderedCount = firstDayIndex + totalDays;
-        const totalGridCells = 42; // standard 6 rows x 7 cols
-        const paddingNext = totalGridCells - renderedCount;
-        
+        const totalRows = Math.ceil(renderedCount / 7);
+        const paddingNext = (totalRows * 7) - renderedCount;
         for (let day = 1; day <= paddingNext; day++) {
-            const cell = document.createElement('div');
-            cell.className = 'calendar-cell bg-slate-50/40 p-2 text-slate-400 border-b border-r border-slate-100 flex flex-col justify-between opacity-40 select-none';
-            cell.innerHTML = `<span class="text-xs font-semibold">${day}</span>`;
-            daysGrid.appendChild(cell);
+            daysGrid.appendChild(createPaddingCell(day));
         }
 
-        // 4. Update stats cards
+        // 4. Update Stats & Analytics
         calculateMonthStats();
     };
 
-    // Calculate month statistics
-    const calculateMonthStats = () => {
-        let totalExpense = 0;
-        let totalIncome = 0;
-        let expenseTransactionsCount = 0;
-        const dailyExpenses = {};
-
-        // Aggregate across visible month
-        Object.keys(transactionsByDay).forEach(dateStr => {
-            const list = transactionsByDay[dateStr] || [];
-            list.forEach(t => {
-                const amt = Number(t.amount);
-                if (t.type === 'expense') {
-                    totalExpense += amt;
-                    expenseTransactionsCount++;
-                    dailyExpenses[dateStr] = (dailyExpenses[dateStr] || 0) + amt;
-                } else {
-                    totalIncome += amt;
-                }
-            });
-        });
-
-        // Calculate peak spending day
-        let peakDate = null;
-        let peakAmt = 0;
-        Object.keys(dailyExpenses).forEach(dateStr => {
-            if (dailyExpenses[dateStr] > peakAmt) {
-                peakAmt = dailyExpenses[dateStr];
-                peakDate = dateStr;
-            }
-        });
-
-        // Average daily expense
-        const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-        const avgDailyExpense = totalExpense / daysInMonth;
-
-        // Populate cards
-        monthExpenseTotalEl.textContent = formatCurrency(totalExpense);
-        monthIncomeTotalEl.textContent = formatCurrency(totalIncome);
-        monthTransactionsCountEl.textContent = expenseTransactionsCount;
-        
-        if (peakDate) {
-            const options = { month: 'short', day: 'numeric' };
-            const formatted = new Date(peakDate).toLocaleDateString('en-IN', options);
-            monthPeakSpendingEl.textContent = `${formatted} (${getCurrencySymbol()}${formatCurrency(peakAmt)})`;
-        } else {
-            monthPeakSpendingEl.textContent = 'None';
-        }
-
-        monthAvgDailyExpenseEl.textContent = formatCurrency(avgDailyExpense);
+    const createPaddingCell = (dayNum) => {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-cell bg-slate-50/40 p-2 text-slate-400 border-b border-r border-slate-100 flex flex-col justify-between opacity-40 select-none';
+        cell.innerHTML = `<span class="text-xs font-semibold">${dayNum}</span>`;
+        return cell;
     };
 
-    // Month Navigation Triggers
-    prevMonthBtn.addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        fetchTransactions();
-    });
+    // Calculate Month & Analytics Stats
+    const calculateMonthStats = () => {
+        let totalExpense = 0, totalIncome = 0, totalTxns = 0;
+        let peakExpDay = null, peakExpAmt = 0;
+        let peakIncDay = null, peakIncAmt = 0;
+        
+        let catTotals = {};
+        let weekTotals = [0,0,0,0,0,0]; // Up to 6 weeks max
+        let weekendExp = 0, weekendDays = 0;
+        let weekdayExp = 0, weekdayDays = 0;
 
-    nextMonthBtn.addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        fetchTransactions();
-    });
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // Day Details Modal Controls
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dateObj = new Date(year, month, day);
+            const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+            const weekNum = Math.floor((day + new Date(year, month, 1).getDay() - 1) / 7);
+
+            if(isWeekend) weekendDays++;
+            else weekdayDays++;
+
+            let rawData = transactionsByDay[dateStr] || { expense: 0, income: 0, transactions: [] };
+            
+            // Apply current filters to stats logic
+            let filteredTxns = rawData.transactions.filter(t => {
+                if (activeFilter.startsWith('type:')) return t.type === activeFilter.split(':')[1];
+                if (activeFilter.startsWith('cat:')) return t.category === activeFilter.split(':')[1];
+                return true;
+            });
+
+            if(searchQuery) {
+                const q = searchQuery.toLowerCase();
+                filteredTxns = filteredTxns.filter(t => t.title.toLowerCase().includes(q) || t.category.toLowerCase().includes(q));
+            }
+
+            let dExp = 0, dInc = 0;
+            filteredTxns.forEach(t => {
+                totalTxns++;
+                if (t.type === 'expense') {
+                    dExp += t.amount;
+                    catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
+                    weekTotals[weekNum] += t.amount;
+                    if(isWeekend) weekendExp += t.amount;
+                    else weekdayExp += t.amount;
+                } else {
+                    dInc += t.amount;
+                }
+            });
+
+            totalExpense += dExp;
+            totalIncome += dInc;
+
+            if (dExp > peakExpAmt) { peakExpAmt = dExp; peakExpDay = dateObj; }
+            if (dInc > peakIncAmt) { peakIncAmt = dInc; peakIncDay = dateObj; }
+        }
+
+        const currencySymbol = getCurrencySymbol();
+        const fmtOptions = { month: 'short', day: 'numeric' };
+
+        statExpense.textContent = formatCurrency(totalExpense);
+        statIncome.textContent = formatCurrency(totalIncome);
+        statNetSavings.textContent = formatCurrency(totalIncome - totalExpense);
+        statTxnCount.textContent = totalTxns;
+        
+        statAvgExp.textContent = formatCurrency(totalExpense / daysInMonth);
+        statPeakSpend.textContent = peakExpDay ? `${peakExpDay.toLocaleDateString('en-IN', fmtOptions)}` : 'None';
+        statPeakInc.textContent = peakIncDay ? `${peakIncDay.toLocaleDateString('en-IN', fmtOptions)}` : 'None';
+        
+        // Budget logic (default 10000 for demo)
+        const budgetLimit = 10000;
+        statBudget.textContent = formatCurrency(budgetLimit - totalExpense);
+
+        // Analytics Update
+        let highCat = 'None', highCatAmt = 0;
+        Object.entries(catTotals).forEach(([cat, amt]) => {
+            if(amt > highCatAmt) { highCatAmt = amt; highCat = cat; }
+        });
+        
+        let highWeek = 1, highWeekAmt = 0;
+        weekTotals.forEach((amt, i) => {
+            if(amt > highWeekAmt) { highWeekAmt = amt; highWeek = i + 1; }
+        });
+
+        anaCat.textContent = highCat !== 'None' ? `${getCategoryIcon(highCat)} ${highCat}` : 'None';
+        anaWeek.textContent = highWeekAmt > 0 ? `Week ${highWeek}` : 'None';
+        anaWeekend.textContent = weekendExp > 0 ? `${currencySymbol}${formatCurrency(weekendExp)}` : 'None';
+        
+        anaAvgWk.textContent = formatCurrency(weekdayDays > 0 ? weekdayExp / weekdayDays : 0);
+        anaAvgWkend.textContent = formatCurrency(weekendDays > 0 ? weekendExp / weekendDays : 0);
+        anaFreq.textContent = totalTxns > 0 ? `${(totalTxns / daysInMonth).toFixed(1)} / day` : '0';
+    };
+
+    // Modal Handlers
     const dayModal = document.getElementById('day-modal');
-    const closeDayModalBtn = document.getElementById('close-day-modal-btn');
-    const dayTransactionsList = document.getElementById('day-transactions-list');
-    const dayModalTitle = document.getElementById('day-modal-title');
     const dayModalDate = document.getElementById('day-modal-date');
-    
-    const dayModalTotal = document.getElementById('day-modal-total');
-    const dayModalCount = document.getElementById('day-modal-count');
+    const dModInc = document.getElementById('day-modal-income');
+    const dModExp = document.getElementById('day-modal-expense');
+    const dModNet = document.getElementById('day-modal-net');
+    const dayTransactionsList = document.getElementById('day-transactions-list');
 
-    const openDayModal = (dateStr, dateObj, dayTransactions) => {
+    const openDayModal = (dateStr, dateObj, txns, totals) => {
         selectedCellDate = dateStr;
+        dayModalDate.textContent = dateObj.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        dayModalTitle.textContent = 'Transactions';
-        dayModalDate.textContent = dateObj.toLocaleDateString('en-IN', options);
+        const cSym = getCurrencySymbol();
+        dModInc.textContent = `${cSym}${formatCurrency(totals.inc)}`;
+        dModExp.textContent = `${cSym}${formatCurrency(totals.exp)}`;
+        dModNet.textContent = `${cSym}${formatCurrency(totals.inc - totals.exp)}`;
         
-        // Reset quick add fields
+        // Reset quick form
         document.getElementById('quick-desc').value = '';
         document.getElementById('quick-amount').value = '';
         document.getElementById('quick-category').value = 'Food';
 
-        // Calculate total daily expense for modal summary
-        const expensesOnly = dayTransactions.filter(t => t.type === 'expense');
-        const dailyExpenseSum = expensesOnly.reduce((sum, t) => sum + Number(t.amount), 0);
-        
-        dayModalTotal.textContent = `${getCurrencySymbol()}${formatCurrency(dailyExpenseSum)}`;
-        dayModalCount.textContent = `${expensesOnly.length} ${expensesOnly.length === 1 ? 'Transaction' : 'Transactions'}`;
-
-        renderDayTransactions(dayTransactions);
+        renderDayTransactions(txns);
 
         dayModal.classList.remove('hidden');
         setTimeout(() => {
@@ -323,70 +437,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeDayModal = () => {
         dayModal.classList.add('opacity-0');
         dayModal.querySelector('.transform').classList.add('scale-95');
-        setTimeout(() => {
-            dayModal.classList.add('hidden');
-        }, 300);
+        setTimeout(() => dayModal.classList.add('hidden'), 300);
     };
 
-    if (closeDayModalBtn) closeDayModalBtn.addEventListener('click', closeDayModal);
+    document.getElementById('close-day-modal-btn').addEventListener('click', closeDayModal);
+    dayModal.addEventListener('click', e => { if (e.target === dayModal) closeDayModal(); });
+    window.addEventListener('keydown', e => { if (e.key === 'Escape' && !dayModal.classList.contains('hidden')) closeDayModal(); });
 
-    // Keyboard support: Close modal on ESC keypress
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !dayModal.classList.contains('hidden')) {
-            closeDayModal();
-        }
+    const openQuickAdd = (dateStr) => {
+        selectedCellDate = dateStr;
+        document.getElementById('quick-desc').value = '';
+        document.getElementById('quick-amount').value = '';
+        
+        let rawData = transactionsByDay[dateStr] || { expense: 0, income: 0, transactions: [] };
+        const [y, m, d] = dateStr.split('-');
+        openDayModal(dateStr, new Date(y, m-1, d), rawData.transactions, {exp: rawData.expense, inc: rawData.income});
+        setTimeout(() => document.getElementById('quick-amount').focus(), 300);
+    };
+
+    document.getElementById('fab-add-txn').addEventListener('click', () => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        openQuickAdd(todayStr);
     });
 
-    // Click outside modal container to close it
-    dayModal.addEventListener('click', (e) => {
-        if (e.target === dayModal) {
-            closeDayModal();
-        }
-    });
-
-    // Render list inside day modal
     const renderDayTransactions = (list) => {
         dayTransactionsList.innerHTML = '';
-        const currencySymbol = getCurrencySymbol();
+        const cSym = getCurrencySymbol();
 
         if (list.length === 0) {
-            dayTransactionsList.innerHTML = `
-                <div class="text-center py-10 text-slate-400 flex flex-col items-center justify-center gap-3">
-                    <span class="text-4xl">📌</span>
-                    <p class="text-xs font-semibold text-slate-500">No expenses recorded for this day.</p>
-                </div>
-            `;
+            dayTransactionsList.innerHTML = `<div class="text-center py-8 text-slate-400"><span class="text-4xl block mb-2">📌</span><p class="text-xs font-semibold">No transactions found.</p></div>`;
             return;
         }
 
         list.forEach(t => {
             const item = document.createElement('div');
-            item.className = 'flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/50 rounded-2xl transition-all hover:bg-slate-100/50';
+            item.className = 'flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/50 rounded-2xl hover:bg-slate-100 transition-colors';
             
-            const isExpense = t.type === 'expense';
-            const iconEmoji = getCategoryIcon(t.category);
+            const isExp = t.type === 'expense';
             const badgeClass = getCategoryBadgeClass(t.category);
-            const amountPrefix = isExpense ? '-' : '+';
-            const amountColor = isExpense ? 'text-slate-800' : 'text-emerald-600';
-
-            // Parse transaction time or show fallback
-            let timeStr = '12:00 PM';
-            if (t.date) {
-                const dateObj = new Date(t.date);
-                timeStr = dateObj.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
-            }
+            const timeStr = t.date ? new Date(t.date).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12:true}) : '12:00 PM';
 
             item.innerHTML = `
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg ${badgeClass}">
-                        ${iconEmoji}
-                    </div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg ${badgeClass}">${getCategoryIcon(t.category)}</div>
                     <div>
-                        <h4 class="font-bold text-slate-800 text-xs md:text-sm">${t.title}</h4>
+                        <h4 class="font-bold text-slate-800 text-sm">${t.title}</h4>
                         <div class="flex items-center gap-1.5 mt-0.5">
                             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${badgeClass}">${t.category}</span>
                             <span class="text-[9px] text-slate-400 font-semibold">${timeStr}</span>
@@ -394,8 +489,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="font-extrabold font-heading text-xs md:text-sm ${amountColor}">${amountPrefix}${currencySymbol}${formatCurrency(t.amount)}</span>
-                    <button class="delete-day-t-btn p-1.5 text-slate-400 hover:text-danger hover:bg-slate-100 rounded-lg transition-colors focus:outline-none" data-id="${t._id}">
+                    <span class="font-extrabold font-heading text-sm ${isExp ? 'text-slate-800' : 'text-emerald-600'}">${isExp ? '-' : '+'}${cSym}${formatCurrency(t.amount)}</span>
+                    <button class="delete-txn-btn p-1.5 text-slate-400 hover:text-danger hover:bg-rose-50 rounded-lg transition-colors focus:outline-none" data-id="${t._id}">
                         <i class="ph ph-trash text-base"></i>
                     </button>
                 </div>
@@ -403,87 +498,145 @@ document.addEventListener('DOMContentLoaded', () => {
             dayTransactionsList.appendChild(item);
         });
 
-        // Day list delete listener
-        dayTransactionsList.querySelectorAll('.delete-day-t-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const id = btn.getAttribute('data-id');
-                if (confirm('Delete this transaction permanently?')) {
+        dayTransactionsList.querySelectorAll('.delete-txn-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (confirm('Delete this transaction?')) {
                     try {
-                        await transactionAPI.delete(id);
-                        showToast('Transaction deleted successfully', 'success');
+                        await transactionAPI.delete(btn.getAttribute('data-id'));
+                        showToast('Transaction deleted', 'success');
                         closeDayModal();
-                        fetchTransactions(); // Refetches and rebuilds
-                    } catch (error) {
-                        showToast('Error deleting transaction');
-                    }
+                        forceRefetch(); 
+                    } catch (e) { showToast('Error deleting'); }
                 }
             });
         });
     };
 
-    // Quick Add Expense Form on Day Modal Submit
+    // Quick Add Submit
     document.getElementById('quick-add-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (!selectedCellDate) return;
-
-        const title = document.getElementById('quick-desc').value;
-        const amount = document.getElementById('quick-amount').value;
-        const category = document.getElementById('quick-category').value;
-        
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const origText = submitBtn.textContent;
-        submitBtn.textContent = 'Adding...';
-        submitBtn.disabled = true;
+        const btn = e.target.querySelector('button[type="submit"]');
+        const orig = btn.textContent;
+        btn.textContent = '...'; btn.disabled = true;
 
         try {
             await transactionAPI.add({
-                title,
-                amount: Number(amount),
-                category,
+                title: document.getElementById('quick-desc').value,
+                amount: Number(document.getElementById('quick-amount').value),
+                category: document.getElementById('quick-category').value,
                 date: selectedCellDate,
-                type: 'expense' // Quick-added transactions defaults to expense
+                type: 'expense' 
             });
-            
-            showToast('Transaction added successfully', 'success');
+            showToast('Added successfully', 'success');
             closeDayModal();
-            fetchTransactions(); // Re-render grid
-        } catch (error) {
-            showToast('Failed to add transaction');
+            forceRefetch();
+        } catch (err) {
+            showToast('Failed to add');
         } finally {
-            submitBtn.textContent = origText;
-            submitBtn.disabled = false;
+            btn.textContent = orig; btn.disabled = false;
         }
     });
 
-    // Fetch transactions from server for currently displayed month
-    const fetchTransactions = async () => {
+    // Fetch Core
+    const fetchTransactions = async (force = false) => {
+        const targetMonth = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!force && monthCache[targetMonth]) {
+            transactionsByDay = monthCache[targetMonth];
+            renderCalendar();
+            return;
+        }
+
+        loadingSpinner.classList.remove('hidden');
         try {
-            // Show Loading Spinner overlay
-            loadingSpinner.classList.remove('hidden');
-
-            const year = currentDate.getFullYear();
-            const monthStr = String(currentDate.getMonth() + 1).padStart(2, '0');
-            const targetMonth = `${year}-${monthStr}`;
-
-            const groupedData = await transactionAPI.getCalendarMonth(targetMonth);
-            transactionsByDay = groupedData || {};
-            
-            // Build grid
+            const data = await transactionAPI.getCalendarMonth(targetMonth);
+            transactionsByDay = data || {};
+            monthCache[targetMonth] = transactionsByDay; // Cache it
             renderCalendar();
         } catch (error) {
-            console.error('Error fetching calendar transactions:', error);
-            showToast('Failed to synchronize with ledger service.');
-            daysGrid.innerHTML = `
-                <div class="col-span-7 text-center py-20 text-rose-500 font-semibold">
-                    <span class="text-4xl block mb-2">⚠️</span>
-                    <p>Failed to synchronize with ledger service.</p>
-                </div>
-            `;
+            showToast('Failed to load calendar data');
         } finally {
-            // Hide loading spinner
             loadingSpinner.classList.add('hidden');
         }
     };
+    const forceRefetch = () => { fetchTransactions(true); };
+
+    // Navigation
+    document.getElementById('prev-month-btn').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); fetchTransactions(); });
+    document.getElementById('next-month-btn').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); fetchTransactions(); });
+
+    // Filters & Search
+    searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        renderCalendar();
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active', 'bg-slate-800', 'text-white');
+                if(!b.classList.contains('bg-white')) b.classList.add('bg-white');
+            });
+            
+            const target = e.currentTarget;
+            target.classList.add('active', 'bg-slate-800', 'text-white');
+            target.classList.remove('bg-white', 'text-slate-600', 'text-slate-700', 'text-emerald-700', 'text-blue-700', 'text-purple-700', 'text-rose-700', 'text-amber-700');
+            
+            activeFilter = target.getAttribute('data-filter');
+            renderCalendar();
+        });
+    });
+
+    // Export & Print (Bonus)
+    document.getElementById('print-btn').addEventListener('click', () => window.print());
+    
+    document.getElementById('export-pdf-btn').addEventListener('click', () => {
+        if(!window.jspdf) return showToast('PDF library loading, try again');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text(`Smart Kharcha - Expense Report`, 14, 22);
+        doc.setFontSize(11);
+        doc.text(`Month: ${monthYearEl.textContent}`, 14, 32);
+        
+        let y = 45;
+        Object.keys(transactionsByDay).sort().forEach(date => {
+            const data = transactionsByDay[date];
+            if(data.transactions.length > 0) {
+                doc.setFont(undefined, 'bold');
+                doc.text(date, 14, y);
+                doc.setFont(undefined, 'normal');
+                y += 6;
+                data.transactions.forEach(t => {
+                    doc.text(`${t.title} (${t.category}): ${t.type==='expense'?'-':'+'}${t.amount}`, 20, y);
+                    y += 6;
+                    if(y > 280) { doc.addPage(); y = 20; }
+                });
+                y += 4;
+            }
+        });
+        doc.save(`Expenses_${monthYearEl.textContent.replace(' ', '_')}.pdf`);
+        showToast('PDF Exported!', 'success');
+    });
+
+    document.getElementById('export-csv-btn').addEventListener('click', () => {
+        if(!window.Papa) return showToast('CSV library loading, try again');
+        let csvData = [];
+        Object.values(transactionsByDay).forEach(data => {
+            data.transactions.forEach(t => {
+                csvData.push({ Date: new Date(t.date).toISOString().split('T')[0], Title: t.title, Category: t.category, Type: t.type, Amount: t.amount });
+            });
+        });
+        if(csvData.length === 0) return showToast('No data to export', 'warning');
+        
+        const csv = Papa.unparse(csvData);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Expenses_${monthYearEl.textContent.replace(' ', '_')}.csv`;
+        link.click();
+        showToast('CSV Exported!', 'success');
+    });
 
     // Init
     fetchTransactions();

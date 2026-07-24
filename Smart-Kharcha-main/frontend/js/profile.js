@@ -1,74 +1,24 @@
 import { userAPI, transactionAPI, getToken } from './api.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Auth Check
-    if (!getToken()) {
-        window.location.href = 'index.html';
-        return;
-    }
+import { loadAllComponents, initCommonUI, showToast } from './common.js';
 
-    // Handle Logout
-    document.querySelectorAll('.logout-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'index.html';
-        });
-    });
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadAllComponents();
+    initCommonUI();
 
-    // Mobile Drawer Navigation Toggles
-    // Mobile Navbar toggle
-    const navToggle = document.getElementById('mobile-nav-toggle');
-    const navMenu = document.getElementById('mobile-nav-menu');
-    if (navToggle && navMenu) {
-        navToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('hidden');
-        });
-    }
-
-    // Global Preferences: Currency Display Update
-    const getCurrencySymbol = () => localStorage.getItem('currency') || '₹';
+    const getCurrencySymbol = () => localStorage.getItem('currency') || ',1';
     const updateCurrencyDisplay = () => {
         const symbol = getCurrencySymbol();
         document.querySelectorAll('.currency-symbol').forEach(el => {
             el.textContent = symbol;
         });
     };
-
     const formatCurrency = (amount) => {
         return Number(amount).toLocaleString('en-IN', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
     };
-
-    // Toast Notifications System
-    function showToast(message, type = 'error') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-white text-sm transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto min-w-[280px]';
-        
-        if (type === 'success') {
-            toast.classList.add('bg-emerald-500', 'shadow-emerald-500/20');
-            toast.innerHTML = `<i class="ph-fill ph-check-circle text-xl"></i><span class="font-medium">${message}</span>`;
-        } else if (type === 'warning') {
-            toast.classList.add('bg-amber-500', 'shadow-amber-500/20');
-            toast.innerHTML = `<i class="ph-fill ph-warning text-xl"></i><span class="font-medium">${message}</span>`;
-        } else {
-            toast.classList.add('bg-rose-500', 'shadow-rose-500/20');
-            toast.innerHTML = `<i class="ph-fill ph-x-circle text-xl"></i><span class="font-medium">${message}</span>`;
-        }
-        
-        container.appendChild(toast);
-        setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
-        
-        setTimeout(() => {
-            toast.classList.add('translate-y-2', 'opacity-0');
-            setTimeout(() => toast.remove(), 300);
-        }, 4000);
-    }
 
     // Password Visibility Toggle
     const passwordToggles = document.querySelectorAll('.password-toggle');
@@ -262,3 +212,4 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPreferences();
     updateCurrencyDisplay();
 });
+

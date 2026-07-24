@@ -1,14 +1,60 @@
 const Transaction = require("../models/Transaction");
 
-// get all transactions for a user
+// get all transactions for a user with filters, sorting, and pagination
 const getTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find({ user: req.user._id });
+    const { 
+      search, type, category, startDate, endDate, 
+      sortBy = 'date', sortOrder = 'desc', 
+      page = 1, limit = 10 
+    } = req.query;
 
-    res.json(transactions);
+    const query = { user: req.user._id };
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (type && type !== 'all') query.type = type;
+    if (category && category !== 'all') query.category = category;
+    
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.date.$lte = end;
+      }
+    }
+
+    const sortObj = {};
+    sortObj[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const total = await Transaction.countDocuments(query);
+    const transactions = await Transaction.find(query)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    res.json({
+      transactions,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / parseInt(limit))
+      }
+    });
 
   } catch (err) {
-    console.error("Update Transaction Error:", err.message);
+    console.error("Get Transactions Error:", err.message);
     res.status(500).json({ message: err.message });
   }
 };
@@ -18,7 +64,7 @@ const getTransactions = async (req, res) => {
 const addTransaction = async (req, res) => {
   try {
     console.log("Add Transaction Body:", req.body);
-    const { title, amount, type, category, date } = req.body;
+    const { title, amount, type, category, date, description, paymentMethod, tags, receiptImage } = req.body;
  
     const transaction = await Transaction.create({
       user: req.user._id,
@@ -26,7 +72,11 @@ const addTransaction = async (req, res) => {
       amount,
       type,
       category,
-      date: date || undefined
+      date: date || undefined,
+      description,
+      paymentMethod,
+      tags,
+      receiptImage
     });
 
     console.log("Created Transaction:", transaction);
@@ -41,7 +91,7 @@ const addTransaction = async (req, res) => {
 // update transaction
 const updateTransaction = async (req, res) => {
   try {
-    const { title, amount, type, category, date } = req.body;
+    const { title, amount, type, category, date, description, paymentMethod, tags, receiptImage } = req.body;
     console.log("Update Body:", req.body);
 
     const transaction = await Transaction.findById(req.params.id);
@@ -50,11 +100,15 @@ const updateTransaction = async (req, res) => {
       return res.status(404).json({ message: "Transaction not found" });
     }
 
-    transaction.title = title || transaction.title;
-    transaction.amount = amount || transaction.amount;
-    transaction.type = type || transaction.type;
-    transaction.category = category || transaction.category;
-    if (date) transaction.date = date;
+    if (title !== undefined) transaction.title = title;
+    if (amount !== undefined) transaction.amount = amount;
+    if (type !== undefined) transaction.type = type;
+    if (category !== undefined) transaction.category = category;
+    if (date !== undefined) transaction.date = date;
+    if (description !== undefined) transaction.description = description;
+    if (paymentMethod !== undefined) transaction.paymentMethod = paymentMethod;
+    if (tags !== undefined) transaction.tags = tags;
+    if (receiptImage !== undefined) transaction.receiptImage = receiptImage;
 
     const updated = await transaction.save();
     console.log("Updated Transaction:", updated);
@@ -106,34 +160,47 @@ const getCalendarTransactions = async (req, res) => {
     const startOfMonth = new Date(yearVal, monthIndex, 1, 0, 0, 0, 0);
     const endOfMonth = new Date(yearVal, monthIndex + 1, 0, 23, 59, 59, 999);
 
-    const transactions = await Transaction.find({
-      user: req.user._id,
-      date: {
-        $gte: startOfMonth,
-        $lte: endOfMonth
+    const aggregated = await Transaction.aggregate([
+      {
+        $match: {
+          user: req.user._id,
+          date: { $gte: startOfMonth, $lte: endOfMonth }
+        }
+      },
+      {
+        $sort: { date: 1 }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+          expense: {
+            $sum: { $cond: [{ $eq: ["$type", "expense"] }, "$amount", 0] }
+          },
+          income: {
+            $sum: { $cond: [{ $eq: ["$type", "income"] }, "$amount", 0] }
+          },
+          transactions: {
+            $push: {
+              _id: "$_id",
+              title: "$title",
+              description: "$title",
+              amount: "$amount",
+              category: "$category",
+              date: "$date",
+              type: "$type"
+            }
+          }
+        }
       }
-    }).sort({ date: 1 });
+    ]);
 
     const grouped = {};
-    transactions.forEach(t => {
-      const localDate = new Date(t.date);
-      const yearStr = localDate.getFullYear();
-      const monthStr = String(localDate.getMonth() + 1).padStart(2, '0');
-      const dayStr = String(localDate.getDate()).padStart(2, '0');
-      const dateStr = `${yearStr}-${monthStr}-${dayStr}`;
-
-      if (!grouped[dateStr]) {
-        grouped[dateStr] = [];
-      }
-      grouped[dateStr].push({
-        _id: t._id,
-        title: t.title,
-        description: t.title,
-        amount: t.amount,
-        category: t.category,
-        date: t.date,
-        type: t.type
-      });
+    aggregated.forEach(dayGroup => {
+      grouped[dayGroup._id] = {
+        expense: dayGroup.expense,
+        income: dayGroup.income,
+        transactions: dayGroup.transactions
+      };
     });
 
     res.json(grouped);
@@ -346,11 +413,118 @@ const getDashboardMetrics = async (req, res) => {
 };
 
 
+// duplicate transaction
+const duplicateTransaction = async (req, res) => {
+  try {
+    const originalTransaction = await Transaction.findOne({ _id: req.params.id, user: req.user._id });
+
+    if (!originalTransaction) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    const newTransaction = await Transaction.create({
+      user: originalTransaction.user,
+      title: `${originalTransaction.title} (Copy)`,
+      amount: originalTransaction.amount,
+      type: originalTransaction.type,
+      category: originalTransaction.category,
+      date: new Date(), // Set to today
+      description: originalTransaction.description,
+      paymentMethod: originalTransaction.paymentMethod,
+      tags: originalTransaction.tags,
+      // intentionally omit receiptImage for duplicate
+    });
+
+    res.json(newTransaction);
+  } catch (err) {
+    console.error("Duplicate Transaction Error:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// pin transaction
+const pinTransaction = async (req, res) => {
+  try {
+    const transaction = await Transaction.findOne({ _id: req.params.id, user: req.user._id });
+
+    if (!transaction) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    transaction.isPinned = !transaction.isPinned;
+    await transaction.save();
+
+    res.json(transaction);
+  } catch (err) {
+    console.error("Pin Transaction Error:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// get advanced transaction analytics
+const getTransactionAnalytics = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const allTimeStats = await Transaction.aggregate([
+      { $match: { user: userId } },
+      { $group: {
+          _id: "$type",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+          avg: { $avg: "$amount" },
+          max: { $max: "$amount" }
+        }
+      }
+    ]);
+
+    const categoryStats = await Transaction.aggregate([
+      { $match: { user: userId, type: 'expense' } },
+      { $group: {
+          _id: "$category",
+          total: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { total: -1 } }
+    ]);
+
+    const monthlyStats = await Transaction.aggregate([
+      { $match: { user: userId } },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$date" },
+            month: { $month: "$date" },
+            type: "$type"
+          },
+          total: { $sum: "$amount" }
+        }
+      },
+      { $sort: { "_id.year": -1, "_id.month": -1 } }
+    ]);
+
+    res.json({
+      allTimeStats,
+      categoryStats,
+      monthlyStats
+    });
+
+  } catch (err) {
+    console.error("Get Transaction Analytics Error:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
 module.exports = {
   getTransactions,
   addTransaction,
   deleteTransaction,
   updateTransaction,
   getCalendarTransactions,
-  getDashboardMetrics
+  getDashboardMetrics,
+  getTransactionAnalytics,
+  duplicateTransaction,
+  pinTransaction
 };

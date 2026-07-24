@@ -36,6 +36,15 @@
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
+    <!-- jsPDF & PapaParse for Exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Tooltip Tippy.js -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css" />
+
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -70,90 +79,110 @@
 </head>
 <body class="flex flex-col h-screen overflow-hidden bg-slate-50 text-slate-800">
 
-    <!-- Unified Top Navbar -->
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm flex-shrink-0">
-        <div class="px-6 md:px-8 h-14 flex items-center justify-between w-full">
-            <!-- Left: Logo -->
-            <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-sm">
-                    <i class="ph-fill ph-wallet text-base text-white"></i>
-                </div>
-                <span class="font-heading text-lg font-bold text-slate-800">Smart Kharcha<span class="text-primary">.</span></span>
-            </div>
-
-            <!-- Center/Right: Desktop Links -->
-            <div class="hidden md:flex items-center gap-1">
-                <a href="dashboard.html" class="text-slate-600 hover:text-primary hover:bg-slate-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-all">Dashboard</a>
-                <a href="calendar.html" class="bg-primary/10 text-primary font-bold px-3 py-1.5 rounded-lg text-sm transition-all">Calendar</a>
-
-                <a href="profile.html" class="text-slate-600 hover:text-primary hover:bg-slate-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-all">Profile</a>
-                <div class="w-px h-5 bg-slate-200 mx-2"></div>
-                <button class="logout-btn px-3 py-1.5 hover:bg-rose-50 text-slate-500 hover:text-danger text-sm font-semibold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none">
-                    <i class="ph ph-sign-out text-base"></i> Logout
-                </button>
-            </div>
-
-            <!-- Mobile Hamburger Button -->
-            <button id="mobile-nav-toggle" class="md:hidden text-slate-600 hover:text-slate-800 p-1.5 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none">
-                <i class="ph ph-list text-2xl"></i>
-            </button>
-        </div>
-
-        <!-- Mobile Dropdown Menu -->
-        <div id="mobile-nav-menu" class="hidden md:hidden border-t border-slate-100 bg-white p-4 space-y-2 shadow-inner">
-            <a href="dashboard.html" class="block px-4 py-3 text-slate-600 hover:bg-slate-50 font-medium rounded-xl text-sm transition-all">Dashboard</a>
-            <a href="calendar.html" class="block px-4 py-3 bg-primary/10 text-primary font-bold rounded-xl text-sm transition-all">Calendar</a>
-
-            <a href="profile.html" class="block px-4 py-3 text-slate-600 hover:bg-slate-50 font-medium rounded-xl text-sm transition-all">Profile</a>
-            <button class="logout-btn flex w-full items-center gap-3 px-4 py-3 text-danger hover:bg-red-50 font-bold rounded-xl text-sm transition-colors focus:outline-none">
-                <i class="ph ph-sign-out text-lg"></i> Logout
-            </button>
-        </div>
-    </nav>
+    <div id="navbar-container"></div>
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col h-full relative overflow-y-auto bg-slate-50">
 
-        <!-- Page Header & Month Selector -->
-        <div class="px-6 pt-6 pb-2 md:px-8 md:pt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <!-- Top Header & Actions -->
+        <div class="px-6 pt-6 pb-4 md:px-8 md:pt-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h2 class="font-heading text-2xl md:text-3xl font-extrabold text-slate-800">Calendar View</h2>
                 <p class="text-slate-500 mt-1 text-sm font-medium">Analyze your expense distribution chronologically.</p>
             </div>
             
-            <!-- Month Navigator -->
-            <div class="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-2xl shadow-sm self-start">
-                <button id="prev-month-btn" class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 focus:outline-none">
-                    <i class="ph ph-caret-left text-lg font-bold"></i>
-                </button>
-                <span id="calendar-month-year" class="font-heading text-sm font-extrabold text-slate-700 min-w-[120px] text-center">July 2026</span>
-                <button id="next-month-btn" class="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 focus:outline-none">
-                    <i class="ph ph-caret-right text-lg font-bold"></i>
-                </button>
+            <div class="flex items-center gap-3 self-start md:self-auto">
+                <div class="relative">
+                    <input type="text" id="calendar-search" placeholder="Search transactions..." class="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-2xl shadow-sm text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 w-48 md:w-64 transition-all">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-lg"></i>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button id="export-pdf-btn" class="p-2 bg-white border border-slate-200 text-slate-600 hover:text-primary hover:bg-slate-50 rounded-xl shadow-sm transition-all" title="Export as PDF">
+                        <i class="ph ph-file-pdf text-xl"></i>
+                    </button>
+                    <button id="export-csv-btn" class="p-2 bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 hover:bg-slate-50 rounded-xl shadow-sm transition-all" title="Export as CSV">
+                        <i class="ph ph-file-csv text-xl"></i>
+                    </button>
+                    <button id="print-btn" class="p-2 bg-white border border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-xl shadow-sm transition-all" title="Print Calendar">
+                        <i class="ph ph-printer text-xl"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Month Summary Stats -->
-        <div class="px-6 py-4 md:px-8 grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
-                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Total Expense</p>
-                <h4 class="font-heading text-lg font-extrabold text-rose-500 mt-1"><span class="currency-symbol">₹</span><span id="month-expense-total">0.00</span></h4>
+        <!-- 2x4 Compact Summary Cards -->
+        <div class="px-6 pb-5 md:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4">
+                <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Total Expense</p>
+                    <h4 class="font-heading text-base md:text-lg font-extrabold text-rose-500 mt-0.5"><span class="currency-symbol">₹</span><span id="month-expense-total">0.00</span></h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Total Income</p>
+                    <h4 class="font-heading text-base md:text-lg font-extrabold text-emerald-600 mt-0.5"><span class="currency-symbol">₹</span><span id="month-income-total">0.00</span></h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Net Savings</p>
+                    <h4 class="font-heading text-base md:text-lg font-extrabold text-primary mt-0.5"><span class="currency-symbol">₹</span><span id="month-net-savings">0.00</span></h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Budget Left</p>
+                    <h4 class="font-heading text-base md:text-lg font-extrabold text-indigo-500 mt-0.5"><span class="currency-symbol">₹</span><span id="month-budget-remaining">0.00</span></h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Transactions</p>
+                    <h4 class="font-heading text-base md:text-lg font-extrabold text-slate-700 mt-0.5"><span id="month-transactions-count">0</span></h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Avg Daily Exp</p>
+                    <h4 class="font-heading text-base md:text-lg font-extrabold text-amber-500 mt-0.5"><span class="currency-symbol">₹</span><span id="month-avg-daily-expense">0.00</span></h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Highest Exp Day</p>
+                    <h4 class="font-heading text-xs md:text-sm font-bold text-slate-700 mt-1 truncate"><span id="month-peak-spending">None</span></h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex flex-col justify-center">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Highest Inc Day</p>
+                    <h4 class="font-heading text-xs md:text-sm font-bold text-slate-700 mt-1 truncate"><span id="month-peak-income">None</span></h4>
+                </div>
             </div>
-            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
-                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Month Income</p>
-                <h4 class="font-heading text-lg font-extrabold text-emerald-600 mt-1"><span class="currency-symbol">₹</span><span id="month-income-total">0.00</span></h4>
+        </div>
+
+        <!-- Calendar Toolbar (Navigation, Filters, Legend) -->
+        <div class="px-6 md:px-8 pb-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 border-b border-slate-200/50 mb-2">
+            
+            <!-- Month Navigator -->
+            <div class="flex items-center gap-1 bg-white border border-slate-200 p-1 rounded-xl shadow-sm shrink-0">
+                <button id="prev-month-btn" class="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 focus:outline-none" aria-label="Previous Month">
+                    <i class="ph ph-caret-left text-lg font-bold"></i>
+                </button>
+                <span id="calendar-month-year" class="font-heading text-sm font-extrabold text-slate-700 w-28 text-center select-none">July 2026</span>
+                <button id="next-month-btn" class="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 focus:outline-none" aria-label="Next Month">
+                    <i class="ph ph-caret-right text-lg font-bold"></i>
+                </button>
             </div>
-            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
-                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Transactions</p>
-                <h4 class="font-heading text-lg font-extrabold text-indigo-500 mt-1"><span id="month-transactions-count">0</span></h4>
+
+            <!-- Quick Filters (Categories) -->
+            <div class="flex items-center gap-2 overflow-x-auto w-full xl:w-auto hide-scrollbar pb-1 xl:pb-0" id="quick-filters-container">
+                <button class="filter-btn active px-3 py-1.5 text-xs font-bold rounded-lg transition-colors bg-slate-800 text-white whitespace-nowrap shrink-0" data-filter="all">All</button>
+                <button class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 whitespace-nowrap shrink-0" data-filter="type:expense">Expense</button>
+                <button class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-colors bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 whitespace-nowrap shrink-0" data-filter="type:income">Income</button>
+                <div class="w-px h-5 bg-slate-300 mx-0.5 shrink-0"></div>
+                <button class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-colors bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50 whitespace-nowrap shrink-0" data-filter="cat:Food">🍔 Food</button>
+                <button class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-colors bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 whitespace-nowrap shrink-0" data-filter="cat:Travel">🚗 Travel</button>
+                <button class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-colors bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 whitespace-nowrap shrink-0" data-filter="cat:Shopping">🛍 Shopping</button>
+                <button class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-colors bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 whitespace-nowrap shrink-0" data-filter="cat:Medical">💊 Medical</button>
+                <button class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-colors bg-white border border-amber-200 text-amber-700 hover:bg-amber-50 whitespace-nowrap shrink-0" data-filter="cat:Bills">📄 Bills</button>
+                <button class="filter-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-colors bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 whitespace-nowrap shrink-0" data-filter="cat:Other">📌 Others</button>
             </div>
-            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
-                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Highest Spent Day</p>
-                <h4 class="font-heading text-sm font-bold text-slate-700 mt-1.5"><span id="month-peak-spending">None</span></h4>
-            </div>
-            <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
-                <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Avg Daily Expense</p>
-                <h4 class="font-heading text-lg font-extrabold text-amber-500 mt-1"><span class="currency-symbol">₹</span><span id="month-avg-daily-expense">0.00</span></h4>
+
+            <!-- Legend -->
+            <div class="flex items-center justify-between gap-3 text-[10px] md:text-xs font-semibold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm shrink-0">
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Inc</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Exp</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-400"></span> Mix</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full border-2 border-primary"></span> Tdy</span>
             </div>
         </div>
 
@@ -178,11 +207,47 @@
                 </div>
 
                 <!-- Calendar Day Cells Grid -->
-                <div id="calendar-days-grid" class="grid grid-cols-7 grid-rows-5 flex-1 divide-x divide-y divide-slate-100 bg-slate-100/50">
+                <div id="calendar-days-grid" class="grid grid-cols-7 flex-1 divide-x divide-y divide-slate-100 bg-white auto-rows-[minmax(80px,1fr)] md:auto-rows-[minmax(100px,1fr)]">
                     <!-- Javascript will insert cells here dynamically -->
                 </div>
             </div>
         </div>
+
+        <!-- Analytics Panel -->
+        <div class="px-6 pb-10 md:px-8">
+            <h3 class="font-heading text-lg font-extrabold text-slate-800 mb-4">Insights & Analytics</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Highest Category</p>
+                    <h4 class="font-heading text-sm font-bold text-slate-700 mt-1.5" id="analytic-high-cat">Loading...</h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Highest Week</p>
+                    <h4 class="font-heading text-sm font-bold text-slate-700 mt-1.5" id="analytic-high-week">Loading...</h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Highest Weekend</p>
+                    <h4 class="font-heading text-sm font-bold text-slate-700 mt-1.5" id="analytic-high-weekend">Loading...</h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Avg Weekday</p>
+                    <h4 class="font-heading text-lg font-extrabold text-amber-500 mt-1"><span class="currency-symbol">₹</span><span id="analytic-avg-weekday">0</span></h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Avg Weekend</p>
+                    <h4 class="font-heading text-lg font-extrabold text-amber-500 mt-1"><span class="currency-symbol">₹</span><span id="analytic-avg-weekend">0</span></h4>
+                </div>
+                <div class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm">
+                    <p class="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Txn Frequency</p>
+                    <h4 class="font-heading text-sm font-bold text-slate-700 mt-1.5" id="analytic-freq">Loading...</h4>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Floating Action Button -->
+        <button id="fab-add-txn" class="fixed bottom-6 right-6 md:bottom-10 md:right-10 bg-primary hover:bg-primaryDark text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-500/40 flex items-center justify-center transition-transform hover:scale-110 z-40 focus:outline-none focus:ring-4 focus:ring-primary/30 group" aria-label="Add Transaction">
+            <i class="ph ph-plus text-2xl group-hover:rotate-90 transition-transform duration-300"></i>
+        </button>
     </main>
 
     <!-- Day Transaction details Modal -->
@@ -194,11 +259,21 @@
                     <p class="text-xs text-slate-500 mt-0.5" id="day-modal-date">July 16, 2026</p>
                 </div>
                 <!-- Total and transaction count displays -->
-                <div class="text-right mr-4 flex flex-col items-end">
-                    <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Total: <span class="text-rose-500" id="day-modal-total">₹0.00</span></span>
-                    <span class="text-[10px] text-slate-400 font-semibold" id="day-modal-count">0 Transactions</span>
+                <div class="text-right flex-1 mx-4 grid grid-cols-3 gap-2">
+                    <div class="flex flex-col items-center bg-emerald-50 rounded-lg p-1 border border-emerald-100">
+                        <span class="text-[9px] text-emerald-600 font-bold uppercase">Income</span>
+                        <span class="text-xs font-bold text-emerald-700" id="day-modal-income">₹0</span>
+                    </div>
+                    <div class="flex flex-col items-center bg-rose-50 rounded-lg p-1 border border-rose-100">
+                        <span class="text-[9px] text-rose-600 font-bold uppercase">Expense</span>
+                        <span class="text-xs font-bold text-rose-700" id="day-modal-expense">₹0</span>
+                    </div>
+                    <div class="flex flex-col items-center bg-slate-50 rounded-lg p-1 border border-slate-200">
+                        <span class="text-[9px] text-slate-500 font-bold uppercase">Net</span>
+                        <span class="text-xs font-bold text-slate-700" id="day-modal-net">₹0</span>
+                    </div>
                 </div>
-                <button type="button" id="close-day-modal-btn" class="text-slate-400 hover:text-slate-600 focus:outline-none"><i class="ph ph-x text-xl"></i></button>
+                <button type="button" id="close-day-modal-btn" class="text-slate-400 hover:text-slate-600 focus:outline-none bg-slate-100 hover:bg-slate-200 rounded-full p-1 transition-colors"><i class="ph ph-x text-lg"></i></button>
             </div>
             
             <!-- List of Transactions for the Day -->
@@ -226,9 +301,9 @@
         </div>
     </div>
 
-    <!-- Notification Toast Container -->
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+    <div id="toast-container-wrapper"></div>
 
     <script type="module" src="./js/calendar.js"></script>
 </body>
 </html>
+

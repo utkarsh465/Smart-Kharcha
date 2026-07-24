@@ -9,7 +9,10 @@ const {
   deleteTransaction,
   updateTransaction,
   getCalendarTransactions,
-  getDashboardMetrics
+  getDashboardMetrics,
+  getTransactionAnalytics,
+  duplicateTransaction,
+  pinTransaction
 } = require("../controllers/transactionController");
 
 
@@ -19,7 +22,10 @@ router.get("/dashboard-metrics", protect, getDashboardMetrics);
 // get calendar transactions
 router.get("/calendar", protect, getCalendarTransactions);
 
-// get all transactions
+// get advanced analytics for transactions
+router.get("/analytics", protect, getTransactionAnalytics);
+
+// get all transactions (now with pagination/filtering)
 router.get("/", protect, getTransactions);
 
 
@@ -32,5 +38,11 @@ router.delete("/:id", protect, deleteTransaction);
 
 // update transaction
 router.put("/:id", protect, updateTransaction);
+
+// duplicate transaction
+router.post("/:id/duplicate", protect, duplicateTransaction);
+
+// pin/unpin transaction
+router.put("/:id/pin", protect, pinTransaction);
 
 module.exports = router;

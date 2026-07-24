@@ -1,97 +1,10 @@
 import { transactionAPI, getToken } from './api.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Auth Check
-    if (!getToken()) {
-        window.location.href = 'index.html';
-        return;
-    }
+import { loadAllComponents, initCommonUI, showToast } from './common.js';
 
-    // Set User Name and Email
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-        try {
-            const user = JSON.parse(userStr);
-            document.getElementById('user-name-display').textContent = user.name || 'User';
-            const profileAvatar = document.getElementById('profile-avatar');
-            if (profileAvatar) {
-                profileAvatar.textContent = (user.name || 'U').charAt(0).toUpperCase();
-            }
-            const dropdownName = document.getElementById('dropdown-user-name');
-            const dropdownEmail = document.getElementById('dropdown-user-email');
-            if (dropdownName) dropdownName.textContent = user.name || 'User';
-            if (dropdownEmail) dropdownEmail.textContent = user.email || 'user@example.com';
-        } catch(e) {}
-    }
-
-    // Dynamic Time-Based Greeting
-    const updateGreeting = () => {
-        const hour = new Date().getHours();
-        const greetingHeading = document.getElementById('greeting-heading');
-        if (!greetingHeading) return;
-
-        let greetingText = '';
-        if (hour < 12) {
-            greetingText = '🌞 Good Morning';
-        } else if (hour < 18) {
-            greetingText = '☀ Good Afternoon';
-        } else {
-            greetingText = '🌙 Good Evening';
-        }
-
-        const name = (userStr ? JSON.parse(userStr).name : '') || 'User';
-        greetingHeading.innerHTML = `${greetingText}, <span class="text-primary">${name}</span>`;
-    };
-    updateGreeting();
-
-    // Handle Logout
-    document.querySelectorAll('.logout-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'index.html';
-        });
-    });
-
-    // Dark Mode Toggle placeholder
-    const darkModeBtn = document.getElementById('dark-mode-toggle');
-    if (darkModeBtn) {
-        darkModeBtn.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            localStorage.setItem('dark_mode', isDark);
-            showToast(`Theme switched to ${isDark ? 'Dark' : 'Light'} Mode`, 'success');
-        });
-        if (localStorage.getItem('dark_mode') === 'true') {
-            document.documentElement.classList.add('dark');
-        }
-    }
-
-    // Notificationbell dropdown handler
-    const notifBtn = document.getElementById('notification-bell-btn');
-    const notifDrawer = document.getElementById('notification-drawer');
-    if (notifBtn && notifDrawer) {
-        notifBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            notifDrawer.classList.toggle('hidden');
-        });
-    }
-
-    // Profile dropdown handler
-    const profileBtn = document.getElementById('profile-dropdown-btn');
-    const profileBox = document.getElementById('profile-dropdown-box');
-    if (profileBtn && profileBox) {
-        profileBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profileBox.classList.toggle('hidden');
-        });
-    }
-
-    // Click outside lists to close dropdowns
-    window.addEventListener('click', () => {
-        if (profileBox) profileBox.classList.add('hidden');
-        if (notifDrawer) notifDrawer.classList.add('hidden');
-    });
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadAllComponents();
+    initCommonUI();
 
     // Currency Settings Helper
     const getCurrencySymbol = () => localStorage.getItem('currency') || '₹';
@@ -1340,3 +1253,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Init load
     fetchData();
 });
+
