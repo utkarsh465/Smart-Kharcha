@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadAllComponents();
     initCommonUI();
 
+    const navDashboard = document.getElementById('nav-dashboard');
+    if (navDashboard) {
+        navDashboard.classList.add('bg-indigo-50', 'text-primary');
+        navDashboard.classList.remove('text-slate-500', 'hover:bg-slate-50', 'hover:text-primary');
+    }
+
     // Currency Settings Helper
     const getCurrencySymbol = () => localStorage.getItem('currency') || '₹';
     const updateCurrencyDisplay = () => {
@@ -311,7 +317,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('txn-edit-id').value = '';
             document.getElementById('txn-amount').value = '';
             document.getElementById('txn-category').value = type === 'expense' ? 'Food' : 'Salary';
-            document.getElementById('txn-date').valueAsDate = new Date();
+            const todayLocal = new Date();
+            document.getElementById('txn-date').value = new Date(todayLocal.getTime() - (todayLocal.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
             document.getElementById('txn-desc').value = '';
             
             toggleModalType(type);

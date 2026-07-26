@@ -1,21 +1,22 @@
+import app from './app/app.js';
 import { transactionAPI, getToken } from './api.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await app.initialize();
+
+    const navCalendar = document.getElementById('nav-calendar');
+    if (navCalendar) {
+        navCalendar.classList.add('bg-indigo-50', 'text-primary');
+        navCalendar.classList.remove('text-slate-500', 'hover:bg-slate-50', 'hover:text-primary');
+    }
+
     // Auth Check
     if (!getToken()) {
         window.location.href = 'index.html';
         return;
     }
 
-    // Handle Logout
-    document.querySelectorAll('.logout-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'index.html';
-        });
-    });
-
+    // Logout logic handled by UserManager
     // Mobile Navbar toggle
     const navToggle = document.getElementById('mobile-nav-toggle');
     const navMenu = document.getElementById('mobile-nav-menu');

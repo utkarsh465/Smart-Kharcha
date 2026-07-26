@@ -19,12 +19,12 @@ const registerUser = async (req, res, next) => {
       password
     });
 
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user._id)
-    });
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        token: generateToken(user._id, user.tokenVersion)
+      });
 
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -45,7 +45,7 @@ const loginUser = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        token: generateToken(user._id)
+        token: generateToken(user._id, user.tokenVersion)
       });
 
     } else {

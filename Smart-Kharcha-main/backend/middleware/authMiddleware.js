@@ -13,8 +13,12 @@ const protect = async (req, res, next) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      req.user = await User.findById(decoded.id).select("-password");
-
+      const user = await User.findById(decoded.id).select("-password");
+      if (decoded.tokenVersion !== undefined && decoded.tokenVersion !== user.tokenVersion) {
+         return res.status(401).json({ message: "Session expired (logged out from all devices)" });
+      }
+      
+      req.user = user;
       next();
 
     } else {

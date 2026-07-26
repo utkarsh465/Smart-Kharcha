@@ -12,27 +12,17 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./js/tailwind-config.js"></script>
+
+    <!-- Dark Mode FOUC Prevention -->
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'sans-serif'],
-                        heading: ['Outfit', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: '#6366f1',
-                        primaryDark: '#4f46e5',
-                        secondary: '#10b981',
-                        danger: '#ef4444',
-                        accent: '#f59e0b',
-                        dark: '#0f172a'
-                    }
-                }
-            }
+        if (localStorage.getItem('dark_mode') === 'true') {
+            document.documentElement.classList.add('dark');
         }
     </script>
     
+    <link rel="stylesheet" href="./css/style.css">
+
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
@@ -44,38 +34,6 @@
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css" />
-
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: #f8fafc;
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
-        }
-        .sidebar-active {
-            color: #6366f1;
-            background-color: rgba(99, 102, 241, 0.08);
-        }
-        .mobile-drawer {
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        
-        /* Calendar cell styling */
-        .calendar-cell {
-            min-height: 80px;
-            transition: all 0.2s ease-in-out;
-        }
-        @media (min-width: 768px) {
-            .calendar-cell {
-                min-height: 100px;
-            }
-        }
-    </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden bg-slate-50 text-slate-800">
 
@@ -306,4 +264,6 @@
     <script type="module" src="./js/calendar.js"></script>
 </body>
 </html>
+
+
 

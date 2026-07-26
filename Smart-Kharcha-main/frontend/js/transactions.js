@@ -1,3 +1,4 @@
+import app from './app/app.js';
 import { transactionAPI } from './api.js';
 import { loadAllComponents, initCommonUI, showToast } from './common.js';
 
@@ -43,8 +44,7 @@ const categoryColors = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadAllComponents();
-    initCommonUI();
+    await app.initialize();
 
     // Highlight nav item (assume navbar has an ID like nav-transactions)
     const navTransactions = document.getElementById('nav-transactions');
@@ -284,7 +284,7 @@ async function fetchAndRender() {
         fetchAnalytics();
 
     } catch (error) {
-        showToast('Error loading transactions', 'error');
+        app.notifications.error('Error loading transactions');
         console.error(error);
     } finally {
         loadingState.classList.add('hidden');
@@ -416,17 +416,17 @@ async function togglePin(id) {
         await transactionAPI.pin(id);
         fetchAndRender();
     } catch (e) {
-        showToast('Error pinning transaction', 'error');
+        app.notifications.error('Error pinning transaction');
     }
 }
 
 async function duplicateTx(id) {
     try {
         await transactionAPI.duplicate(id);
-        showToast('Transaction duplicated', 'success');
+        app.notifications.success('Transaction duplicated');
         fetchAndRender();
     } catch (e) {
-        showToast('Error duplicating transaction', 'error');
+        app.notifications.error('Error duplicating transaction');
     }
 }
 
@@ -491,17 +491,17 @@ async function handleSaveTransaction(e) {
 
         if (id) {
             await transactionAPI.update(id, payload);
-            showToast('Transaction updated successfully', 'success');
+            app.notifications.success('Transaction updated successfully');
         } else {
             await transactionAPI.add(payload);
-            showToast('Transaction added successfully', 'success');
+            app.notifications.success('Transaction added successfully');
         }
 
         document.getElementById('edit-tx-modal').classList.add('hidden');
         fetchAndRender();
 
     } catch (err) {
-        showToast(err.message, 'error');
+        app.notifications.error(err.message);
     } finally {
         btn.innerHTML = 'Save Changes';
         btn.disabled = false;
@@ -549,7 +549,7 @@ function initiateDelete(id, liElement) {
         liElement.style.opacity = '1';
         liElement.style.pointerEvents = 'auto';
         toast.remove();
-        showToast('Deletion undone', 'success');
+        app.notifications.success('Deletion undone');
     });
 
     deleteTimeout = setTimeout(async () => {
@@ -559,7 +559,7 @@ function initiateDelete(id, liElement) {
                 fetchAndRender();
                 if (toast.parentNode) toast.remove();
             } catch (err) {
-                showToast('Error deleting', 'error');
+                app.notifications.error('Error deleting');
                 liElement.style.opacity = '1';
                 liElement.style.pointerEvents = 'auto';
             }
@@ -585,7 +585,7 @@ async function exportCSV() {
         const data = response.transactions;
 
         if (data.length === 0) {
-            showToast('No data to export', 'warning');
+            app.notifications.warning('No data to export');
             return;
         }
 
@@ -618,9 +618,10 @@ async function exportCSV() {
         a.click();
         document.body.removeChild(a);
 
-        showToast('CSV Exported', 'success');
+        app.notifications.success('CSV Exported');
 
     } catch (e) {
-        showToast('Export failed', 'error');
+        app.notifications.error('Export failed');
     }
 }
+

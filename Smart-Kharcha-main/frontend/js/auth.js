@@ -1,3 +1,4 @@
+import app from './app/app.js';
 import { authAPI } from './api.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -32,40 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Elegant Toast Notification System
-    function showToast(message, type = 'error') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl text-white text-sm transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto min-w-[280px]';
-        
-        if (type === 'success') {
-            toast.classList.add('bg-emerald-500', 'shadow-emerald-500/20');
-            toast.innerHTML = `<i class="ph-fill ph-check-circle text-xl"></i><span class="font-medium">${message}</span>`;
-        } else if (type === 'warning') {
-            toast.classList.add('bg-amber-500', 'shadow-amber-500/20');
-            toast.innerHTML = `<i class="ph-fill ph-warning text-xl"></i><span class="font-medium">${message}</span>`;
-        } else {
-            toast.classList.add('bg-rose-500', 'shadow-rose-500/20');
-            toast.innerHTML = `<i class="ph-fill ph-x-circle text-xl"></i><span class="font-medium">${message}</span>`;
-        }
-        
-        container.appendChild(toast);
-        
-        // Trigger reflow & animate in
-        setTimeout(() => {
-            toast.classList.remove('translate-y-2', 'opacity-0');
-        }, 10);
-        
-        // Animate out & remove
-        setTimeout(() => {
-            toast.classList.add('translate-y-2', 'opacity-0');
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
-        }, 4000);
-    }
+    // Notifications now handled by NotificationManager
 
     // Toggle forms with smooth fade
     showRegisterBtn.addEventListener('click', () => {
@@ -110,13 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user || { name: 'User', email: email }));
             
-            showToast('Sign in successful! Redirecting...', 'success');
+            app.notifications.success('Sign in successful! Redirecting...');
             
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1000);
         } catch (error) {
-            showToast(error.message || 'Invalid email or password');
+            app.notifications.error(error.message || 'Invalid email or password');
             setButtonLoading(submitBtn, false, originalHtml);
         }
     });
@@ -137,14 +105,15 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user || { name: name, email: email }));
             
-            showToast('Account created successfully! Welcome onboard.', 'success');
+            app.notifications.success('Account created successfully! Welcome onboard.');
             
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1200);
         } catch (error) {
-            showToast(error.message || 'Registration failed. Try again.');
+            app.notifications.error(error.message || 'Registration failed. Try again.');
             setButtonLoading(submitBtn, false, originalHtml);
         }
     });
 });
+

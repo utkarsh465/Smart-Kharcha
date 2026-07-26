@@ -45,6 +45,10 @@ export async function loadComponent(url, containerId) {
     }
 }
 
+/**
+ * @deprecated This file is deprecated in Milestone 2.
+ * Its logic has been migrated to frontend/js/managers/ (LayoutManager, NotificationManager, ThemeManager)
+ */
 export async function loadAllComponents() {
     await loadComponent('./components/navbar.html', 'navbar-container');
     await loadComponent('./components/notification-panel.html', 'notification-panel-container');
@@ -91,11 +95,11 @@ export function initCommonUI() {
 
         let greetingText = '';
         if (hour < 12) {
-            greetingText = '?? Good Morning';
+            greetingText = '🌅 Good Morning';
         } else if (hour < 18) {
-            greetingText = '? Good Afternoon';
+            greetingText = '☀️ Good Afternoon';
         } else {
-            greetingText = '?? Good Evening';
+            greetingText = '🌙 Good Evening';
         }
 
         const name = (userStr ? JSON.parse(userStr).name : '') || 'User';
@@ -112,19 +116,7 @@ export function initCommonUI() {
         });
     });
 
-    // Dark Mode Toggle placeholder
-    const darkModeBtn = document.getElementById('dark-mode-toggle');
-    if (darkModeBtn) {
-        darkModeBtn.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            localStorage.setItem('dark_mode', isDark);
-            window.showToast(`Theme switched to ${isDark ? 'Dark' : 'Light'} Mode`, 'success');
-        });
-        if (localStorage.getItem('dark_mode') === 'true') {
-            document.documentElement.classList.add('dark');
-        }
-    }
+    // Dark mode logic removed
 
     // Notificationbell dropdown handler
     const notifBtn = document.getElementById('notification-bell-btn');

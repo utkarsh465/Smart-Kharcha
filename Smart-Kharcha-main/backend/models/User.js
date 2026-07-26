@@ -18,6 +18,24 @@ const userSchema = new mongoose.Schema({
     required: true
   },
 
+  avatar: {
+    type: String,
+    default: ''
+  },
+
+  preferences: {
+    currency: { type: String, default: '₹' },
+    budgetLimit: { type: Number, default: 10000 },
+    appLanguage: { type: String, default: 'en' },
+    darkMode: { type: Boolean, default: false },
+    notifications: { type: Boolean, default: true }
+  },
+
+  tokenVersion: {
+    type: Number,
+    default: 0
+  },
+
   createdAt: {
     type: Date,
     default: Date.now

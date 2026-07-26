@@ -19,6 +19,8 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
+// Serve static uploads
+app.use('/uploads', express.static('uploads'));
 
 // test route
 app.get("/", (req, res) => {

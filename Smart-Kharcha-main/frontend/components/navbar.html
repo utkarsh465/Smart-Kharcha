@@ -1,12 +1,21 @@
 <!-- Unified Top Navbar -->
-<nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm flex-shrink-0">
+<nav class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm flex-shrink-0">
     <div class="px-6 md:px-8 h-16 flex items-center justify-between w-full">
-        <!-- Left: Logo -->
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-                <i class="ph-fill ph-wallet text-lg text-white"></i>
+        <!-- Left: Logo & Navigation -->
+        <div class="flex items-center gap-8">
+            <a href="dashboard.html" class="flex items-center gap-3 hover:opacity-90 transition-opacity">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                    <i class="ph-fill ph-wallet text-lg text-white"></i>
+                </div>
+                <span class="font-heading text-xl font-bold text-slate-800">Smart Kharcha<span class="text-primary">.</span></span>
+            </a>
+            
+            <!-- Navigation Links -->
+            <div class="hidden lg:flex items-center gap-4 text-sm font-semibold text-slate-500">
+                <a href="dashboard.html" id="nav-dashboard" class="hover:text-primary transition-colors px-2 py-1 rounded-lg">Dashboard</a>
+                <a href="transactions.html" id="nav-transactions" class="hover:text-primary transition-colors px-2 py-1 rounded-lg">Transactions</a>
+                <a href="calendar.html" id="nav-calendar" class="hover:text-primary transition-colors px-2 py-1 rounded-lg">Calendar</a>
             </div>
-            <span class="font-heading text-xl font-bold text-slate-800">Smart Kharcha<span class="text-primary">.</span></span>
         </div>
 
         <!-- Center: Search Bar & Live Suggestions -->

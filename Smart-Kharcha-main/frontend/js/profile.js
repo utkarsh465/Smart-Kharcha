@@ -1,10 +1,16 @@
+import app from './app/app.js';
 import { userAPI, transactionAPI, getToken } from './api.js';
 
 import { loadAllComponents, initCommonUI, showToast } from './common.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadAllComponents();
-    initCommonUI();
+    await app.initialize();
+
+    const navProfile = document.getElementById('nav-profile');
+    if (navProfile) {
+        navProfile.classList.add('bg-indigo-50', 'text-primary');
+        navProfile.classList.remove('text-slate-500', 'hover:bg-slate-50', 'hover:text-primary');
+    }
 
     const getCurrencySymbol = () => localStorage.getItem('currency') || ',1';
     const updateCurrencyDisplay = () => {
@@ -74,6 +80,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         sectionStats.classList.remove('hidden');
         fetchStatsAndRender();
     });
+
+    // Check URL params for specific tab selection
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tab') === 'settings') {
+        tabConfigBtn.click();
+    }
 
     // Load Profile details from Backend
     const loadProfileData = async () => {
