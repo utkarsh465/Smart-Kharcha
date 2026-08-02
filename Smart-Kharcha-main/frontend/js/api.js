@@ -43,6 +43,10 @@ const authAPI = {
     register: (name, email, password) => apiCall('/auth/register', {
         method: 'POST',
         body: JSON.stringify({ name, email, password })
+    }),
+    checkEmail: (email) => apiCall('/auth/check-email', {
+        method: 'POST',
+        body: JSON.stringify({ email })
     })
 };
 

@@ -62,7 +62,30 @@ const loginUser = async (req, res, next) => {
   }
 };
 
+// Check email availability
+const checkEmail = async (req, res, next) => {
+  try {
+    let { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+    
+    email = email.toLowerCase().trim();
+    const userExists = await User.findOne({ email });
+    
+    if (userExists) {
+      return res.json({ available: false, message: "Email already exists" });
+    }
+    
+    return res.json({ available: true, message: "Email available" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
-  loginUser
+  loginUser,
+  checkEmail
 };
