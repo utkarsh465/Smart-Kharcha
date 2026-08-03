@@ -4,6 +4,7 @@ import LayoutManager from '../managers/LayoutManager.js';
 import UserManager from '../managers/UserManager.js';
 import NotificationManager from '../managers/NotificationManager.js';
 import LoaderManager from '../managers/LoaderManager.js';
+import I18nManager from '../managers/I18nManager.js';
 
 class App {
     constructor() {
@@ -13,10 +14,12 @@ class App {
         this.user = UserManager;
         this.notifications = NotificationManager;
         this.loader = LoaderManager;
+        this.i18n = I18nManager;
     }
     
     async initialize() {
         // Initialize independent managers
+        this.i18n.initialize();
         this.notifications.initialize();
         this.loader.initialize();
         this.theme.initialize();

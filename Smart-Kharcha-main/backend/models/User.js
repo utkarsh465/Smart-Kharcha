@@ -80,6 +80,14 @@ const userSchema = new mongoose.Schema({
     notifications: { type: Boolean, default: true }
   },
 
+  loginHistory: [{
+    ip: String,
+    browser: String,
+    os: String,
+    device: String,
+    time: { type: Date, default: Date.now }
+  }],
+
   tokenVersion: {
     type: Number,
     default: 0

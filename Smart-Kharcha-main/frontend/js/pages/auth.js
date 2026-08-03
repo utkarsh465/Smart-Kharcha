@@ -78,6 +78,12 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user || { name: 'User', email: email }));
             
+            if (data.preferences) {
+                if (data.preferences.currency) localStorage.setItem('currency', data.preferences.currency);
+                if (data.preferences.appLanguage) localStorage.setItem('language', data.preferences.appLanguage);
+                if (data.preferences.budgetLimit) localStorage.setItem('monthly_budget', data.preferences.budgetLimit);
+            }
+
             app.notifications.success('Sign in successful! Redirecting...');
             
             setTimeout(() => {
@@ -306,9 +312,15 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const data = await authAPI.register(name, email, password);
             localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user || { name: name, email: email }));
+            localStorage.setItem('user', JSON.stringify({ name, email }));
             
-            app.notifications.success('✅ Account Created Successfully. Welcome to Smart Kharcha!');
+            if (data.preferences) {
+                if (data.preferences.currency) localStorage.setItem('currency', data.preferences.currency);
+                if (data.preferences.appLanguage) localStorage.setItem('language', data.preferences.appLanguage);
+                if (data.preferences.budgetLimit) localStorage.setItem('monthly_budget', data.preferences.budgetLimit);
+            }
+            
+            app.notifications.success('Account created successfully! Welcome to Smart Kharcha!');
             
             setTimeout(() => {
                 window.location.href = 'dashboard.html';

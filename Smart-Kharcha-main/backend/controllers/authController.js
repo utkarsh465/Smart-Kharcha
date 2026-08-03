@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
+const UAParser = require("ua-parser-js");
 
 // Register user
 const registerUser = async (req, res, next) => {
@@ -23,10 +24,11 @@ const registerUser = async (req, res, next) => {
       password
     });
 
-      res.json({
+      res.status(201).json({
         _id: user._id,
         name: user.name,
         email: user.email,
+        preferences: user.preferences,
         token: generateToken(user._id, user.tokenVersion)
       });
 
@@ -49,12 +51,29 @@ const loginUser = async (req, res, next) => {
 
     if (user && (await user.matchPassword(password))) {
       user.lastLogin = Date.now();
+      
+      const parser = new UAParser(req.headers['user-agent']);
+      const result = parser.getResult();
+      
+      user.loginHistory.push({
+          ip: req.ip || req.connection.remoteAddress,
+          browser: result.browser.name ? `${result.browser.name} ${result.browser.version}` : 'Unknown Browser',
+          os: result.os.name ? `${result.os.name} ${result.os.version}` : 'Unknown OS',
+          device: result.device.type ? result.device.type : (result.device.vendor ? result.device.vendor : 'Desktop/Laptop'),
+          time: Date.now()
+      });
+      
+      if (user.loginHistory.length > 10) {
+          user.loginHistory.shift();
+      }
+      
       await user.save();
       
       res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
+        preferences: user.preferences,
         token: generateToken(user._id, user.tokenVersion)
       });
     } else {

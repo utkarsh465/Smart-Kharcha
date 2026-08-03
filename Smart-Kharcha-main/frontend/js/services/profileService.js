@@ -20,5 +20,11 @@ export const userAPI = {
             throw new Error(data.message || 'Failed to upload avatar');
         }
         return data;
-    }
+    },
+    logoutAll: () => apiCall('/users/logout-all', {
+        method: 'POST'
+    }),
+    deleteAccount: () => apiCall('/users/profile', {
+        method: 'DELETE'
+    })
 };
