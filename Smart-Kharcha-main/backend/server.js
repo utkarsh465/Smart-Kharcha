@@ -22,9 +22,14 @@ app.use(express.json());
 // Serve static uploads
 app.use('/uploads', express.static('uploads'));
 
-// test route
+const path = require("path");
+
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// test route - now serves the landing page
 app.get("/", (req, res) => {
-  res.send("Backend is up and running");
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 
