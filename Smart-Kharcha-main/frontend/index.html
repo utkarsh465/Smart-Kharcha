@@ -558,9 +558,32 @@
         </div>
     </footer>
 
-    <script type="module">
-        import ThemeManager from './js/managers/ThemeManager.js';
-        ThemeManager.initialize();
+    <script>
+        (function() {
+            // Apply saved theme on load
+            var saved = localStorage.getItem('theme');
+            if (saved === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.body.style.backgroundColor = '#0f172a';
+                document.body.style.color = '#f8fafc';
+            }
+
+            // Attach click handler to all .theme-toggle buttons
+            document.querySelectorAll('.theme-toggle').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var isDark = document.documentElement.classList.toggle('dark');
+                    if (isDark) {
+                        document.body.style.backgroundColor = '#0f172a';
+                        document.body.style.color = '#f8fafc';
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        document.body.style.backgroundColor = '';
+                        document.body.style.color = '';
+                        localStorage.setItem('theme', 'light');
+                    }
+                });
+            });
+        })();
     </script>
 </body>
 
