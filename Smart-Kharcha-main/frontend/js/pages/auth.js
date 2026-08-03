@@ -1,5 +1,5 @@
-import app from './app/app.js';
-import { authAPI } from './api.js';
+import app from '../app/app.js';
+import { authAPI } from '../services/authService.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Check if already logged in
