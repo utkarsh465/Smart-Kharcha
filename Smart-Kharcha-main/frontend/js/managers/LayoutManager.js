@@ -45,7 +45,8 @@ class LayoutManager {
             this.loadComponent('loader-container', 'loader'),
             this.loadComponent('toast-container', 'toast'),
             this.loadComponent('notification-panel-container', 'notification-panel'),
-            this.loadComponent('profile-dropdown-container', 'profile-dropdown')
+            this.loadComponent('profile-dropdown-container', 'profile-dropdown'),
+            this.loadComponent('modals-container', 'modals')
         ];
         
         await Promise.all(promises);
