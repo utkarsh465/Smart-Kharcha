@@ -44,6 +44,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    // Avatar Upload Logic
+    const avatarTrigger = document.getElementById('avatar-upload-trigger');
+    const avatarInput = document.getElementById('input-avatar-upload');
+    const avatarImg = document.getElementById('profile-avatar-img');
+    const avatarSpan = document.getElementById('profile-avatar');
+
+    if (avatarTrigger && avatarInput) {
+        avatarTrigger.addEventListener('click', () => {
+            avatarInput.click();
+        });
+
+        avatarInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            try {
+                const res = await userAPI.uploadAvatar(formData);
+                if (typeof showToast !== 'undefined') showToast('Profile photo updated successfully!', 'success');
+                
+                if (res.avatar) {
+                    avatarImg.src = `http://localhost:5000${res.avatar}`;
+                    avatarImg.classList.remove('hidden');
+                    avatarSpan.classList.add('hidden');
+                    
+                    const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                    cachedUser.avatar = res.avatar;
+                    localStorage.setItem('user', JSON.stringify(cachedUser));
+                    
+                    if (typeof calculateProfileCompletion === 'function') {
+                        calculateProfileCompletion(cachedUser);
+                    }
+                }
+            } catch (error) {
+                console.error('Avatar upload error:', error);
+                if (typeof showToast !== 'undefined') showToast(error.message || 'Failed to upload photo', 'error');
+            }
+        });
+    }
+
     // Tab Navigation Configuration
     const tabAccountBtn = document.getElementById('tab-account-btn');
     const tabConfigBtn = document.getElementById('tab-config-btn');
@@ -95,14 +137,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Map text details
             document.getElementById('profile-name').textContent = user.name || 'User';
             document.getElementById('profile-email').textContent = user.email || 'user@example.com';
-            document.getElementById('profile-avatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+            
+            // Display Avatar Image if it exists
+            const profileAvatarImg = document.getElementById('profile-avatar-img');
+            const profileAvatarSpan = document.getElementById('profile-avatar');
+            if (user.avatar && profileAvatarImg && profileAvatarSpan) {
+                profileAvatarImg.src = `http://localhost:5000${user.avatar}`;
+                profileAvatarImg.classList.remove('hidden');
+                profileAvatarSpan.classList.add('hidden');
+            } else if (profileAvatarSpan) {
+                profileAvatarSpan.textContent = (user.name || 'U').charAt(0).toUpperCase();
+                if (profileAvatarImg) profileAvatarImg.classList.add('hidden');
+                profileAvatarSpan.classList.remove('hidden');
+            }
+
+            // Additional details in header
+            if (user.createdAt) {
+                const memberSince = new Date(user.createdAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+                document.getElementById('profile-member-since').textContent = memberSince;
+            }
+            if (user.lastLogin) {
+                const lastLoginStr = new Date(user.lastLogin).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' });
+                const lastLoginEl = document.getElementById('profile-last-login');
+                if(lastLoginEl) lastLoginEl.textContent = lastLoginStr;
+            }
+            if (user.accountStatus) {
+                const statusEl = document.getElementById('profile-account-status');
+                if(statusEl) statusEl.textContent = user.accountStatus;
+            }
 
             // Populate forms
             document.getElementById('input-profile-name').value = user.name || '';
             document.getElementById('input-profile-email').value = user.email || '';
+            document.getElementById('input-profile-username').value = user.username || '';
+            document.getElementById('input-profile-phone').value = user.phone || '';
+            if (user.dob) {
+                document.getElementById('input-profile-dob').value = new Date(user.dob).toISOString().split('T')[0];
+            }
+            document.getElementById('input-profile-gender').value = user.gender || '';
+            document.getElementById('input-profile-occupation').value = user.occupation || '';
+            document.getElementById('input-profile-country').value = user.country || '';
+            document.getElementById('input-profile-city').value = user.city || '';
             
             // Sync user back in local cache
             localStorage.setItem('user', JSON.stringify(user));
+            
+            // Calculate completion percentage
+            calculateProfileCompletion(user);
+            
         } catch (error) {
             console.error('Error fetching profile:', error);
             showToast('Failed to load live profile. Using cache.');
@@ -113,9 +195,73 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const user = JSON.parse(userStr);
                 document.getElementById('profile-name').textContent = user.name || 'User';
                 document.getElementById('profile-email').textContent = user.email || 'user@example.com';
-                document.getElementById('profile-avatar').textContent = (user.name || 'U').charAt(0).toUpperCase();
+                
+                const profileAvatarImg = document.getElementById('profile-avatar-img');
+                const profileAvatarSpan = document.getElementById('profile-avatar');
+                if (user.avatar && profileAvatarImg && profileAvatarSpan) {
+                    profileAvatarImg.src = `http://localhost:5000${user.avatar}`;
+                    profileAvatarImg.classList.remove('hidden');
+                    profileAvatarSpan.classList.add('hidden');
+                } else if (profileAvatarSpan) {
+                    profileAvatarSpan.textContent = (user.name || 'U').charAt(0).toUpperCase();
+                    if (profileAvatarImg) profileAvatarImg.classList.add('hidden');
+                    profileAvatarSpan.classList.remove('hidden');
+                }
+                
                 document.getElementById('input-profile-name').value = user.name || '';
                 document.getElementById('input-profile-email').value = user.email || '';
+                document.getElementById('input-profile-username').value = user.username || '';
+                document.getElementById('input-profile-phone').value = user.phone || '';
+                document.getElementById('input-profile-gender').value = user.gender || '';
+                document.getElementById('input-profile-occupation').value = user.occupation || '';
+                document.getElementById('input-profile-country').value = user.country || '';
+                document.getElementById('input-profile-city').value = user.city || '';
+                
+                calculateProfileCompletion(user);
+            }
+        }
+    };
+
+    const calculateProfileCompletion = (user) => {
+        // Define fields to check for completion
+        const fieldsToCheck = ['name', 'email', 'avatar', 'username', 'phone', 'dob', 'gender', 'occupation', 'country', 'city'];
+        let filledCount = 0;
+
+        fieldsToCheck.forEach(field => {
+            if (user[field] && String(user[field]).trim() !== '') {
+                filledCount++;
+            }
+        });
+
+        const percentage = Math.round((filledCount / fieldsToCheck.length) * 100);
+        
+        // Update UI
+        const completionValEl = document.getElementById('profile-completion-val');
+        const completionRingEl = document.getElementById('profile-completion-ring');
+        const alertEl = document.getElementById('profile-missing-alert');
+        
+        if (completionValEl) completionValEl.textContent = `${percentage}%`;
+        if (completionRingEl) {
+            // Circle circumference for r=15.9 is approx 100
+            completionRingEl.style.strokeDasharray = `${percentage} 100`;
+            
+            // Color based on completion
+            if (percentage < 50) {
+                completionRingEl.style.stroke = '#ef4444'; // Red
+            } else if (percentage < 100) {
+                completionRingEl.style.stroke = '#f59e0b'; // Amber
+            } else {
+                completionRingEl.style.stroke = '#10b981'; // Emerald
+            }
+        }
+        
+        if (alertEl) {
+            if (percentage < 100) {
+                alertEl.classList.remove('hidden');
+                alertEl.classList.add('flex');
+            } else {
+                alertEl.classList.add('hidden');
+                alertEl.classList.remove('flex');
             }
         }
     };
@@ -135,14 +281,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         const name = document.getElementById('input-profile-name').value;
         const email = document.getElementById('input-profile-email').value;
-        const password = document.getElementById('input-profile-password').value;
+        const username = document.getElementById('input-profile-username').value;
+        const phone = document.getElementById('input-profile-phone').value;
+        const dob = document.getElementById('input-profile-dob').value;
+        const gender = document.getElementById('input-profile-gender').value;
+        const occupation = document.getElementById('input-profile-occupation').value;
+        const country = document.getElementById('input-profile-country').value;
+        const city = document.getElementById('input-profile-city').value;
+        
+        const password = document.getElementById('input-profile-password') ? document.getElementById('input-profile-password').value : '';
 
         const saveBtn = e.target.querySelector('button[type="submit"]');
         const origText = saveBtn.textContent;
         saveBtn.textContent = 'Saving...';
         saveBtn.disabled = true;
 
-        const payload = { name, email };
+        const payload = { 
+            name, 
+            email, 
+            username, 
+            phone, 
+            dob: dob || undefined, 
+            gender, 
+            occupation, 
+            country, 
+            city 
+        };
         if (password) payload.password = password;
 
         try {
@@ -150,8 +314,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             showToast('Profile credentials saved successfully!', 'success');
             
-            // Reset password field
-            document.getElementById('input-profile-password').value = '';
+            // Reset password field if it exists
+            const pwdInput = document.getElementById('input-profile-password');
+            if (pwdInput) pwdInput.value = '';
 
             // Update UI headers
             document.getElementById('profile-name').textContent = updated.name;
@@ -160,6 +325,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Cache Sync
             localStorage.setItem('user', JSON.stringify(updated));
+            
+            // Recalculate completion
+            calculateProfileCompletion(updated);
         } catch (error) {
             showToast('Failed to save profile details');
         } finally {

@@ -25,6 +25,53 @@ const userSchema = new mongoose.Schema({
     default: ''
   },
 
+  username: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true
+  },
+
+  phone: {
+    type: String,
+    default: ''
+  },
+
+  dob: {
+    type: Date
+  },
+
+  gender: {
+    type: String,
+    enum: ['Male', 'Female', 'Other', 'Prefer not to say', ''],
+    default: ''
+  },
+
+  occupation: {
+    type: String,
+    default: ''
+  },
+
+  country: {
+    type: String,
+    default: ''
+  },
+
+  city: {
+    type: String,
+    default: ''
+  },
+
+  accountStatus: {
+    type: String,
+    enum: ['Active', 'Suspended', 'Inactive'],
+    default: 'Active'
+  },
+
+  lastLogin: {
+    type: Date
+  },
+
   preferences: {
     currency: { type: String, default: '₹' },
     budgetLimit: { type: Number, default: 10000 },

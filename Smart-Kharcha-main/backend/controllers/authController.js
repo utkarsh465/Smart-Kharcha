@@ -48,6 +48,9 @@ const loginUser = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
+      user.lastLogin = Date.now();
+      await user.save();
+      
       res.json({
         _id: user._id,
         name: user.name,

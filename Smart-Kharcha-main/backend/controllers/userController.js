@@ -18,6 +18,15 @@ const updateProfile = async (req, res) => {
 
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
+    
+    // New fields
+    if (req.body.username !== undefined) user.username = req.body.username;
+    if (req.body.phone !== undefined) user.phone = req.body.phone;
+    if (req.body.dob !== undefined) user.dob = req.body.dob;
+    if (req.body.gender !== undefined) user.gender = req.body.gender;
+    if (req.body.occupation !== undefined) user.occupation = req.body.occupation;
+    if (req.body.country !== undefined) user.country = req.body.country;
+    if (req.body.city !== undefined) user.city = req.body.city;
 
     if (req.body.password) {
       user.password = req.body.password;
