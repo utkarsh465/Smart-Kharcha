@@ -17,6 +17,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="./js/tailwind-config.js"></script>
 
+    <!-- Dark Mode FOUC Prevention -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.body && (document.body.style.backgroundColor = '#0f172a');
+            }
+        })();
+    </script>
+
     <link rel="stylesheet" href="./css/style.css">
 
     <!-- Phosphor Icons -->
@@ -26,20 +37,26 @@
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background: linear-gradient(to bottom, #ffffff, #eff6ff 15%, #ffffff 30%);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        html.dark body {
+            background: linear-gradient(to bottom, #0f172a, #0f172a 100%) !important;
+            color: #f1f5f9;
+        }
+        html.dark nav span {
+            color: #f1f5f9;
+        }
+        html.dark footer {
+            background-color: #0a0f1e;
         }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6 {
+        h1, h2, h3, h4, h5, h6 {
             font-family: 'Outfit', sans-serif;
         }
     </style>
 </head>
 
-<body class="bg-white text-slate-800 antialiased overflow-x-hidden">
+<body class="bg-white text-slate-800 antialiased overflow-x-hidden transition-colors duration-300">
 
     <!-- Navbar -->
     <nav class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between relative z-50">
@@ -48,13 +65,15 @@
                 class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
                 <i class="ph-fill ph-wallet text-xl text-white"></i>
             </div>
-            <span class="font-heading text-xl font-bold text-slate-800">Smart Kharcha<span
+            <span class="font-heading text-xl font-bold text-slate-800 dark:text-slate-100">Smart Kharcha<span
                     class="text-blue-500">.</span></span>
         </div>
-        <div class="hidden md:flex items-center gap-8">
-            <!-- <a href="#" class="text-blue-600 font-medium hover:text-blue-700 transition-colors">Tools</a>
-            <a href="#" class="text-blue-600 font-medium hover:text-blue-700 transition-colors">Changelog</a>
-            <a href="#" class="text-blue-600 font-medium hover:text-blue-700 transition-colors">Blogs</a> -->
+        <div class="hidden md:flex items-center gap-4">
+            <!-- Theme Toggle -->
+            <button class="theme-toggle w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none">
+                <i class="ph ph-moon text-xl block dark:hidden"></i>
+                <i class="ph ph-sun text-xl hidden dark:block"></i>
+            </button>
             <a href="login.html"
                 class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold transition-all hover:-translate-y-0.5 shadow-lg shadow-blue-500/30">Login</a>
         </div>
@@ -483,9 +502,9 @@
                 </p>
             </div>
 
-            <div class="border-t border-slate-800 my-10"></div>
+            <!-- <div class="border-t border-slate-800 my-10"></div> -->
 
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <!-- <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <div>
                     <h4 class="text-white font-bold mb-6 font-heading tracking-wide text-sm uppercase">Product</h4>
                     <ul class="space-y-3 text-sm">
@@ -525,9 +544,9 @@
                         <li><a href="#" class="hover:text-blue-400 transition-colors">Twitter</a></li>
                     </ul>
                 </div>
-            </div>
+            </div> -->
 
-            <div class="border-t border-slate-800 my-10"></div>
+            <!-- <div class="border-t border-slate-800 my-10"></div> -->
 
             <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
                 <p>Made with ❤️ using MERN Stack</p>
@@ -539,6 +558,10 @@
         </div>
     </footer>
 
+    <script type="module">
+        import ThemeManager from './js/managers/ThemeManager.js';
+        ThemeManager.initialize();
+    </script>
 </body>
 
 </html>

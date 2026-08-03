@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -15,7 +15,15 @@
     <script src="./js/tailwind-config.js"></script>
 
     <!-- Dark Mode FOUC Prevention -->
-    <!-- Dark mode removed -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.body && (document.body.style.backgroundColor = '#0f172a');
+            }
+        })();
+    </script>
     
     <link rel="stylesheet" href="./css/style.css">
 
