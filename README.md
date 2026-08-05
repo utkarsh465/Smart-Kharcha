@@ -19,7 +19,6 @@ categorize their expenses to understand where their money is being spent.
 
 **Frontend**
 
-* React.js
 * HTML
 * CSS
 * JavaScript
@@ -39,8 +38,8 @@ categorize their expenses to understand where their money is being spent.
 
 smart_kharcha
 │
-├── client # React frontend
-├── server # Node.js backend
+├── frontend # HTML, CSS, JS frontend
+├── backend # Node.js backend
 ├── package.json
 └── README.md
 
@@ -59,11 +58,7 @@ cd smart_kharcha
 ### 3️⃣ Install dependencies
 
 Backend:
-cd server
-npm install
-
-Frontend:
-cd client
+cd backend
 npm install
 
 ### 4️⃣ Run the project
@@ -72,7 +67,7 @@ Backend:
 npm run dev
 
 Frontend:
-npm run dev
+Open `frontend/index.html` in your browser.
 
 ---
 
