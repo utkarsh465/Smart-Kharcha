@@ -8,7 +8,10 @@ export const userAPI = {
     }),
     uploadAvatar: async (formData) => {
         const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5000/api/users/avatar', {
+        const apiBase = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:5000/api'
+            : `${window.location.origin}/api`;
+        const response = await fetch(`${apiBase}/users/avatar`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`

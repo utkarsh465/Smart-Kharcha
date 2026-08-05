@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (typeof showToast !== 'undefined') showToast('Profile photo updated successfully!', 'success');
                 
                 if (res.avatar) {
-                    avatarImg.src = `http://localhost:5000${res.avatar}`;
+                    avatarImg.src = `${window.location.origin}${res.avatar}`;
                     avatarImg.classList.remove('hidden');
                     avatarSpan.classList.add('hidden');
                     
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const profileAvatarImg = document.getElementById('profile-avatar-img');
             const profileAvatarSpan = document.getElementById('profile-avatar');
             if (user.avatar && profileAvatarImg && profileAvatarSpan) {
-                profileAvatarImg.src = `http://localhost:5000${user.avatar}`;
+                profileAvatarImg.src = `${window.location.origin}${user.avatar}`;
                 profileAvatarImg.classList.remove('hidden');
                 profileAvatarSpan.classList.add('hidden');
             } else if (profileAvatarSpan) {
@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const profileAvatarImg = document.getElementById('profile-avatar-img');
                 const profileAvatarSpan = document.getElementById('profile-avatar');
                 if (user.avatar && profileAvatarImg && profileAvatarSpan) {
-                    profileAvatarImg.src = `http://localhost:5000${user.avatar}`;
+                    profileAvatarImg.src = `${window.location.origin}${user.avatar}`;
                     profileAvatarImg.classList.remove('hidden');
                     profileAvatarSpan.classList.add('hidden');
                 } else if (profileAvatarSpan) {
