@@ -50,6 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 150);
     });
 
+    // Auto-switch to Register form if URL has ?tab=register
+    // e.g. when user clicks "Get Started" on the landing page
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tab') === 'register') {
+        loginFormContainer.classList.add('hidden-form');
+        registerFormContainer.classList.remove('hidden-form');
+    }
+
     // Helper to toggle button loading state
     function setButtonLoading(button, isLoading, originalHtml) {
         if (isLoading) {
