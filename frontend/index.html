@@ -49,9 +49,20 @@
             color: #f1f5f9;
         }
 
-        html.dark footer {
-            background-color: #0a0f1e;
-            color: #e2e8f0;
+        html.dark footer, footer {
+        background-color: #0a0f1e !important;
+        }
+        footer span.font-heading,
+        html.dark footer span.font-heading {
+            color: #ffffff !important;
+        }
+        footer p,
+        html.dark footer p {
+            color: #cbd5e1 !important;
+        }
+        footer .text-blue-500,
+        html.dark footer .text-blue-500 {
+            color: #3b82f6 !important;
         }
 
         h1,
@@ -505,10 +516,10 @@
                         class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
                         <i class="ph-fill ph-wallet text-xl text-white"></i>
                     </div>
-                    <span class="font-heading text-xl font-bold text-white">Smart Kharcha<span
+                    <span class="font-heading text-xl font-bold" style="color: #ffffff !important;">Smart Kharcha<span
                             class="text-blue-500">.</span></span>
                 </div>
-                <p class="max-w-md leading-relaxed text-slate-300 text-sm">
+                <p class="max-w-md leading-relaxed text-sm" style="color: #cbd5e1 !important;">
                     Manage your finances smarter with real-time expense tracking,
                     budget planning, analytics, and AI-powered financial insights.
                 </p>
@@ -560,7 +571,7 @@
 
             <!-- <div class="border-t border-slate-800 my-10"></div> -->
 
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-300">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm" style="color: #cbd5e1 !important;">
                 <p>Made with ❤️ using MERN Stack</p>
                 <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8">
                     <p>© 2026 Smart Kharcha. All Rights Reserved.</p>
