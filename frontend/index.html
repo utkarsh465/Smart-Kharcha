@@ -19,7 +19,7 @@
 
     <!-- Dark Mode FOUC Prevention -->
     <script>
-        (function() {
+        (function () {
             const theme = localStorage.getItem('theme');
             if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
@@ -39,18 +39,26 @@
             background: linear-gradient(to bottom, #ffffff, #eff6ff 15%, #ffffff 30%);
             transition: background 0.3s ease, color 0.3s ease;
         }
+
         html.dark body {
             background: linear-gradient(to bottom, #0f172a, #0f172a 100%) !important;
             color: #f1f5f9;
         }
+
         html.dark nav span {
             color: #f1f5f9;
         }
+
         html.dark footer {
             background-color: #0a0f1e;
         }
 
-        h1, h2, h3, h4, h5, h6 {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             font-family: 'Outfit', sans-serif;
         }
     </style>
@@ -70,7 +78,8 @@
         </div>
         <div class="hidden md:flex items-center gap-4">
             <!-- Theme Toggle -->
-            <button class="theme-toggle w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none">
+            <button
+                class="theme-toggle w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none">
                 <i class="ph ph-moon text-xl block dark:hidden"></i>
                 <i class="ph ph-sun text-xl hidden dark:block"></i>
             </button>
@@ -488,15 +497,16 @@
     <!-- Footer Section -->
     <footer class="bg-slate-900 text-slate-400 py-16 mt-12 border-t border-slate-800">
         <div class="max-w-7xl mx-auto px-6">
-            
+
             <div class="mb-12">
                 <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
                         <i class="ph-fill ph-wallet text-xl text-white"></i>
                     </div>
                     <span class="font-heading text-xl font-bold text-white">Smart Kharcha<span class="text-blue-500">.</span></span>
                 </div>
-                <p class="max-w-md leading-relaxed text-slate-400 text-sm">
+                <p class="max-w-md leading-relaxed text-slate-300 text-sm">
                     Manage your finances smarter with real-time expense tracking,
                     budget planning, analytics, and AI-powered financial insights.
                 </p>
@@ -548,7 +558,7 @@
 
             <!-- <div class="border-t border-slate-800 my-10"></div> -->
 
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-300">
                 <p>Made with ❤️ using MERN Stack</p>
                 <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8">
                     <p>© 2026 Smart Kharcha. All Rights Reserved.</p>
@@ -559,7 +569,7 @@
     </footer>
 
     <script>
-        (function() {
+        (function () {
             // Apply saved theme on load
             var saved = localStorage.getItem('theme');
             if (saved === 'dark') {
@@ -569,8 +579,8 @@
             }
 
             // Attach click handler to all .theme-toggle buttons
-            document.querySelectorAll('.theme-toggle').forEach(function(btn) {
-                btn.addEventListener('click', function() {
+            document.querySelectorAll('.theme-toggle').forEach(function (btn) {
+                btn.addEventListener('click', function () {
                     var isDark = document.documentElement.classList.toggle('dark');
                     if (isDark) {
                         document.body.style.backgroundColor = '#0f172a';
